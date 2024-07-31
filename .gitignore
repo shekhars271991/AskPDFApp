@@ -1,0 +1,17 @@
+.aider*
+/config/secrets.py
+# Ignore Python bytecode files
+*.pyc
+__pycache__/
+
+# Ignore environment variables
+.env
+
+# Ignore build output
+build/
+dist/
+venv/
+
+# Ignore temporary files
+*.log
+*.tmp

@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Flask Debug",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/app.py",
+        "console": "integratedTerminal",
+        "env": {
+          "FLASK_APP": "${workspaceFolder}/app.py",
+          "FLASK_ENV": "development",
+          "FLASK_CONFIG": "config.DevConfig"
+        },
+        "justMyCode": true
+      }
+    ]
+  }
+  

@@ -16,17 +16,21 @@ UPLOAD_DIRECTORY = 'app/uploadedFiles'
 @api_bp.route('/ask', methods=['POST'])
 def ask_question():
     data = request.get_json()
-    query = data['query']
-    role = data['role']
+    query = data.get('query')
+    role = data.get('role')
 
-
-    # before then get the relatable docs
+    # Retrieve related documents based on the query
     related_docs = get_docs_related_to_query(query)
 
-    context = get_context_from_similar_entries(query, role, related_docs)
-    answer = ask_llama(context,query)
+    # Check if related_docs is None or empty
+    if not related_docs:
+        return jsonify({'answer': "No related documents found.", 'relatedDocs': []})
 
-    return jsonify({'answer': answer})
+    context = get_context_from_similar_entries(query, role, related_docs)
+    answer = ask_llama(context, query)
+
+    return jsonify({'answer': answer, 'relatedDocs': related_docs})
+
 
 
 @api_bp.route('/upload', methods=['POST'])
@@ -52,12 +56,14 @@ def upload_file():
             upload_time = datetime.now().isoformat()
 
             text = extract_text_from_pdf(file_path)
-            chunks = chunk_text(text)
-            embeddings = get_embeddings(chunks)
+           
 
             # get doc summary
             summary = summarize_llama(text)
             summary_embeddings = get_embeddings(summary).tolist()
+            
+            chunks = chunk_text(text)
+            embeddings = get_embeddings(chunks)
             store_file_metadata(doc_name, file.filename, upload_time, roles, summary, summary_embeddings)
 
             store_chunks_in_vectorDB(doc_name, chunks, embeddings, roles)

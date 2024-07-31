@@ -68,34 +68,20 @@ def perform_vector_search_for_chunks(query_embedding, role, related_docs):
     # Join the matching chunks to form the context
     context = "\n\n".join(matching_chunks)
     return context
-# def perform_vector_search_for_chunks(query_embedding, role, related_docs):
 
-    
-#     vector = np.array(query_embedding, dtype=np.float32).tobytes()
-#     q = Query(f'(@roles:{role} | public)=>[KNN 3 @vector $query_vec AS vector_score]')\
-#                 .sort_by('vector_score')\
-#                 .return_fields('vector_score', 'chunk')\
-#                 .dialect(3)
-
-#     params = {"query_vec": vector}
-
-#     results = redis_client.ft(CHUNK_INDEX_NAME).search(q, query_params=params)
-
-#     matching_chunks = [doc.chunk for doc in results.docs]
-#     context = "\n\n".join(matching_chunks)
-#     return context
 
 def perform_vector_search_for_documents(query_embedding):
     vector = np.array(query_embedding, dtype=np.float32).tobytes()
-    q = Query(f'(*)=>[KNN 3 @vector $query_vec AS vector_score]')\
+    q = Query(f'(*)=>[KNN 2 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
                 .return_fields('vector_score', 'unique_filename', 'original_filename')\
                 .dialect(2)
 
+
     params = {"query_vec": vector}
 
     results = redis_client.ft(SUMMARY_INDEX_NAME).search(q, query_params=params)
-    related_docs = [doc.id for doc in results.docs]
+    related_docs = [doc.id for doc in results.docs if float(doc.vector_score) <= 0.8]
 
     return related_docs
 

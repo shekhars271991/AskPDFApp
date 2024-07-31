@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
-from app.services.document_service import store_file_metadata, extract_text_from_pdf,list_uploaded_documents, chunk_text, get_unique_filename
+from app.services.document_service import store_file_metadata, extract_text_from_pdf,list_uploaded_documents, chunk_text, get_unique_filename,get_context_from_similar_entries, get_docs_related_to_query
 from app.services.embedding_service import store_chunks_in_vectorDB, get_embeddings
 from app.services.classification_service import classify_task_type
 from app.services.llama_service import ask_llama
-from app.services.redis_service import search_similar_chunks, get_keys, delete_doc
+from app.services.redis_service import get_keys, delete_doc
 from app.services.file_description_service import summarize_llama
 import os
 from datetime import datetime
@@ -21,9 +21,10 @@ def ask_question():
 
 
     # before then get the relatable docs
+    related_docs = get_docs_related_to_query(query)
 
-    context = search_similar_chunks(query, role)
-    answer = classify_task_type(query)
+    context = get_context_from_similar_entries(query, role, related_docs)
+    answer = ask_llama(context,query)
 
     return jsonify({'answer': answer})
 

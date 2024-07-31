@@ -11,6 +11,7 @@ def store_chunks_in_vectorDB(doc_name, chunks, embeddings, roles):
         key = f"chunk_{doc_name}_{i}"
         value = {
             "chunk": chunk,
+            "doc_name":doc_name,
             "embedding": embedding.tolist(),
             "roles": roles
         }

@@ -2,7 +2,7 @@ import fitz
 import os
 import uuid
 from datetime import datetime
-from app.services.redis_service import set_json, get_keys, get_json, perform_vector_search
+from app.services.redis_service import set_json, get_keys, get_json, perform_vector_search_for_chunks, perform_vector_search_for_documents
 from app.services.embedding_service import get_embeddings
 # from sentence_transformers import SentenceTransformer
 
@@ -24,8 +24,6 @@ def chunk_text(text, chunk_size=500):
     chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
     return chunks
 
-
-
 def get_unique_filename(filename):
     original_filename = filename
     filename_prefix = original_filename[:3] if len(original_filename) >= 3 else original_filename
@@ -34,9 +32,9 @@ def get_unique_filename(filename):
     return unique_filename
 
 
-def get_context_from_similar_entires(query, role):
+def get_context_from_similar_entries(query, role, related_docs):
     query_embedding = get_embeddings(query)
-    context = perform_vector_search(query_embedding, role)
+    context = perform_vector_search_for_chunks(query_embedding, role, related_docs)
     return context
 
 def store_file_metadata(doc_name, original_filename, upload_time, roles, summary, summary_embeddings):
@@ -44,6 +42,7 @@ def store_file_metadata(doc_name, original_filename, upload_time, roles, summary
     metadata = {
         "uploaded_time": upload_time,
         "original_filename": original_filename,
+        "unique_filename":doc_name,
         "roles": roles,
         "summary": summary,
         "summary_embeddings":summary_embeddings
@@ -62,3 +61,18 @@ def list_uploaded_documents():
                 "metadata": metadata
             })
     return documents
+
+def get_docs_related_to_query(query):
+    query_embedding = get_embeddings(query)
+    doc_ids = perform_vector_search_for_documents(query_embedding)
+    return clean_filenames(doc_ids)
+
+
+def clean_filenames(filenames):
+    cleaned_filenames = []
+    for filename in filenames:
+        # Remove the leading 'file_' and trailing '_metadata'
+        if filename.startswith('file_') and filename.endswith('_metadata'):
+            cleaned_filename = filename[len('file_'):-len('_metadata')]
+            cleaned_filenames.append(cleaned_filename)
+    return cleaned_filenames

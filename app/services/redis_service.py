@@ -1,6 +1,6 @@
 import numpy as np
 from redis.commands.search.query import Query
-from redis.commands.search.field import TextField, VectorField
+from redis.commands.search.field import TextField, VectorField, TagField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from sentence_transformers import SentenceTransformer
 import redis
@@ -17,46 +17,15 @@ redis_client = redis.Redis(
 # Your existing code for Redis interactions
 
 
-INDEX_NAME = "idxpdf"
+CHUNK_INDEX_NAME = "idxpdf"
+SUMMARY_INDEX_NAME = "idxsumm"
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
-
-def perform_vector_search(query_embedding, role):
-    vector = np.array(query_embedding, dtype=np.float32).tobytes()
-    q = Query(f'(@roles:{role} | public)=>[KNN 3 @vector $query_vec AS vector_score]')\
-                .sort_by('vector_score')\
-                .return_fields('vector_score', 'chunk')\
-                .dialect(3)
-
-    params = {"query_vec": vector}
-
-    results = redis_client.ft(INDEX_NAME).search(q, query_params=params)
-
-    matching_chunks = [doc.chunk for doc in results.docs]
-    context = "\n\n".join(matching_chunks)
-    return context
-
-def search_similar_chunks(query, role):
-    query_embedding = model.encode(query)
-    vector = np.array(query_embedding, dtype=np.float32).tobytes()
-
-    q = Query(f'(@roles:{role} | public)=>[KNN 3 @vector $query_vec AS vector_score]')\
-                .sort_by('vector_score')\
-                .return_fields('vector_score', 'chunk')\
-                .dialect(3)
-
-    params = {"query_vec": vector}
-
-    results = redis_client.ft(INDEX_NAME).search(q, query_params=params)
-
-    matching_chunks = [doc.chunk for doc in results.docs]
-    context = "\n\n".join(matching_chunks)
-    return context
-
-def create_vector_index():
+def create_vector_index_chunk():
     schema = [
         TextField("$.chunk", as_name='chunk'),
         TextField("$.roles", as_name='roles'),
+        TextField("$.doc_name", as_name='doc_name'),
         VectorField('$.embedding', "HNSW", {
             "TYPE": 'FLOAT32',
             "DIM": 384,
@@ -67,11 +36,94 @@ def create_vector_index():
     idx_def = IndexDefinition(index_type=IndexType.JSON, prefix=['chunk_'])
 
     try:
-        redis_client.ft(INDEX_NAME).dropindex()
+        redis_client.ft(CHUNK_INDEX_NAME).dropindex()
     except:
         pass
 
-    redis_client.ft(INDEX_NAME).create_index(schema, definition=idx_def)
+    redis_client.ft(CHUNK_INDEX_NAME).create_index(schema, definition=idx_def)
+
+def perform_vector_search_for_chunks(query_embedding, role, related_docs):
+    # Convert query embedding to a binary format for Redis
+    vector = np.array(query_embedding, dtype=np.float32).tobytes()
+    
+    
+    # doc_name_filter = " | ".join([f'@doc_name:{{{doc.unique_filename}}}' for doc in related_docs.docs])
+   
+    doc_name_filter = ""
+    for i, doc in enumerate(related_docs):
+        if i > 0:
+            doc_name_filter += " | "
+        doc_name_filter += f"@doc_name:{{{doc}}}"    
+    
+
+    
+
+    q = Query(f'({doc_name_filter})=>[KNN 3 @vector $query_vec AS vector_score]')\
+                .sort_by('vector_score')\
+                .return_fields('vector_score', 'chunk')\
+                .dialect(3)
+
+    # Set the parameters for the query, including the vector for similarity search
+    params = {"query_vec": vector}
+    # Execute the search query on Redis
+    results = redis_client.ft(CHUNK_INDEX_NAME).search(q, query_params=params)
+    # Extract the chunks of text from the search results
+    matching_chunks = [doc.chunk for doc in results.docs]
+    # Join the matching chunks to form the context
+    context = "\n\n".join(matching_chunks)
+    return context
+# def perform_vector_search_for_chunks(query_embedding, role, related_docs):
+
+    
+#     vector = np.array(query_embedding, dtype=np.float32).tobytes()
+#     q = Query(f'(@roles:{role} | public)=>[KNN 3 @vector $query_vec AS vector_score]')\
+#                 .sort_by('vector_score')\
+#                 .return_fields('vector_score', 'chunk')\
+#                 .dialect(3)
+
+#     params = {"query_vec": vector}
+
+#     results = redis_client.ft(CHUNK_INDEX_NAME).search(q, query_params=params)
+
+#     matching_chunks = [doc.chunk for doc in results.docs]
+#     context = "\n\n".join(matching_chunks)
+#     return context
+
+def perform_vector_search_for_documents(query_embedding):
+    vector = np.array(query_embedding, dtype=np.float32).tobytes()
+    q = Query(f'(*)=>[KNN 3 @vector $query_vec AS vector_score]')\
+                .sort_by('vector_score')\
+                .return_fields('vector_score', 'unique_filename', 'original_filename')\
+                .dialect(2)
+
+    params = {"query_vec": vector}
+
+    results = redis_client.ft(SUMMARY_INDEX_NAME).search(q, query_params=params)
+    related_docs = [doc.id for doc in results.docs]
+
+    return related_docs
+
+
+
+def create_vector_index_summary():
+    schema = [
+        TagField("$.original_filename", as_name='original_filename'),
+        TagField("$.unique_filename", as_name='unique_filename'),
+        VectorField('$.summary_embeddings', "HNSW", {
+            "TYPE": 'FLOAT32',
+            "DIM": 384,
+            "DISTANCE_METRIC": "COSINE"
+        }, as_name='vector')
+    ]
+
+    idx_def = IndexDefinition(index_type=IndexType.JSON, prefix=['file_'])
+
+    try:
+        redis_client.ft(SUMMARY_INDEX_NAME).dropindex()
+    except:
+        pass
+
+    redis_client.ft(SUMMARY_INDEX_NAME).create_index(schema, definition=idx_def)
 
 def delete_doc(key):
     return redis_client.delete(key)

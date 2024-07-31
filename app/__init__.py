@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from config import DevConfig, ProdConfig  # Import configurations
-from .services.redis_service import create_vector_index  # Import the function
+from .services.redis_service import create_vector_index_chunk,create_vector_index_summary  # Import the function
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -16,6 +16,7 @@ def create_app(config_class='config.DevConfig'):
     # Import routes
     from app.api.routes import api_bp
     app.register_blueprint(api_bp)
-    create_vector_index()
+    create_vector_index_chunk()
+    create_vector_index_summary()
 
     return app

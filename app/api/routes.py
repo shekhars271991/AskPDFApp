@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.services.document_service import store_file_metadata, extract_text_from_pdf,list_uploaded_documents, chunk_text, get_embeddings, get_unique_filename
-from app.services.embedding_service import store_chunks_in_vectorDB
+from app.services.document_service import store_file_metadata, extract_text_from_pdf,list_uploaded_documents, chunk_text, get_unique_filename
+from app.services.embedding_service import store_chunks_in_vectorDB, get_embeddings
 from app.services.classification_service import classify_task_type
 from app.services.llama_service import ask_llama
 from app.services.redis_service import search_similar_chunks, get_keys, delete_doc
@@ -18,6 +18,9 @@ def ask_question():
     data = request.get_json()
     query = data['query']
     role = data['role']
+
+
+    # before then get the relatable docs
 
     context = search_similar_chunks(query, role)
     answer = classify_task_type(query)
@@ -53,7 +56,7 @@ def upload_file():
 
             # get doc summary
             summary = summarize_llama(text)
-            summary_embeddings = get_embeddings(summary)
+            summary_embeddings = get_embeddings(summary).tolist()
             store_file_metadata(doc_name, file.filename, upload_time, roles, summary, summary_embeddings)
 
             store_chunks_in_vectorDB(doc_name, chunks, embeddings, roles)

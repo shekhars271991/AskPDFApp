@@ -21,6 +21,20 @@ INDEX_NAME = "idxpdf"
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
+def perform_vector_search(query_embedding, role):
+    vector = np.array(query_embedding, dtype=np.float32).tobytes()
+    q = Query(f'(@roles:{role} | public)=>[KNN 3 @vector $query_vec AS vector_score]')\
+                .sort_by('vector_score')\
+                .return_fields('vector_score', 'chunk')\
+                .dialect(3)
+
+    params = {"query_vec": vector}
+
+    results = redis_client.ft(INDEX_NAME).search(q, query_params=params)
+
+    matching_chunks = [doc.chunk for doc in results.docs]
+    context = "\n\n".join(matching_chunks)
+    return context
 
 def search_similar_chunks(query, role):
     query_embedding = model.encode(query)

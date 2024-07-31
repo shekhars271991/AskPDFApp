@@ -2,12 +2,13 @@ import fitz
 import os
 import uuid
 from datetime import datetime
-from app.services.redis_service import set_json, get_keys, get_json
-from sentence_transformers import SentenceTransformer
+from app.services.redis_service import set_json, get_keys, get_json, perform_vector_search
+from app.services.embedding_service import get_embeddings
+# from sentence_transformers import SentenceTransformer
 
 
 UPLOAD_DIRECTORY = 'AskPDF/backend_llama/uploadedFiles'
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
 def extract_text_from_pdf(pdf_path):
@@ -23,9 +24,7 @@ def chunk_text(text, chunk_size=500):
     chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
     return chunks
 
-def get_embeddings(chunks):
-    embeddings = model.encode(chunks)
-    return embeddings
+
 
 def get_unique_filename(filename):
     original_filename = filename
@@ -33,6 +32,12 @@ def get_unique_filename(filename):
     filename, file_extension = os.path.splitext(original_filename)
     unique_filename = f"{filename_prefix}_{str(uuid.uuid4())[:8]}{file_extension}"
     return unique_filename
+
+
+def get_context_from_similar_entires(query, role):
+    query_embedding = get_embeddings(query)
+    context = perform_vector_search(query_embedding, role)
+    return context
 
 def store_file_metadata(doc_name, original_filename, upload_time, roles, summary, summary_embeddings):
     metadata_key = f"file_{doc_name}_metadata"

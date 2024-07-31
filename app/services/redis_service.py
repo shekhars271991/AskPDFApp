@@ -44,16 +44,12 @@ def create_vector_index_chunk():
 
 def perform_vector_search_for_chunks(query_embedding, role, related_docs):
     # Convert query embedding to a binary format for Redis
-    vector = np.array(query_embedding, dtype=np.float32).tobytes()
-    
-    
-    # doc_name_filter = " | ".join([f'@doc_name:{{{doc.unique_filename}}}' for doc in related_docs.docs])
-   
+    vector = np.array(query_embedding, dtype=np.float32).tobytes()   
     doc_name_filter = ""
     for i, doc in enumerate(related_docs):
         if i > 0:
             doc_name_filter += " | "
-        doc_name_filter += f"@doc_name:{{{doc}}}"    
+        doc_name_filter += f"@doc_name:{doc}"    
     
 
     

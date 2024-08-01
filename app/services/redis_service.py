@@ -4,9 +4,9 @@ from redis.commands.search.field import TextField, VectorField, TagField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from sentence_transformers import SentenceTransformer
 import redis
-
+import bcrypt
 from config.config import Config
-import redis
+
 
 redis_client = redis.Redis(
     host=Config.REDIS_HOST,
@@ -115,8 +115,6 @@ def set_json(key,path,value):
 def get_json(key):
     return redis_client.json().get(key)
 
-def get_json(key):
-    return redis_client.json().get(key)
 
 def create_vector_index_cache():
     schema = [
@@ -151,3 +149,19 @@ def perform_vector_search_for_cache(query_embedding):
     related_queries = [doc.id for doc in results.docs if float(doc.vector_score) <= 0.5]
 
     return related_queries
+
+
+def get_user(username):
+    keyname = f"user:{username}"
+    return redis_client.json().get(keyname)
+
+def add_user(username, password, roles):
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    user_data = {
+        "password": hashed_password.decode('utf-8'),
+        "roles": roles
+    }
+    redis_client.json().set(f"user:{username}", '.',user_data)
+
+def check_key(key):
+    return redis_client.exists(key)

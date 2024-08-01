@@ -58,7 +58,9 @@ def list_uploaded_documents():
             metadata = get_json(key)
             documents.append({
                 "doc_name": doc_name,
-                "metadata": metadata
+                "uploaded_time":metadata['uploaded_time'],
+                "orignal_filename":metadata['original_filename'],
+                "summary":metadata['summary']
             })
     return documents
 

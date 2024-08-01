@@ -8,13 +8,14 @@ from app.services.file_description_service import summarize_llama
 from app.services.sematic_cache_service import insert_in_semantic_cache, check_sematic_cache, get_data_from_cache
 import os
 from datetime import datetime
-
+from flask_jwt_extended import jwt_required
 
 api_bp = Blueprint('api', __name__)
 UPLOAD_DIRECTORY = 'app/uploadedFiles'
 
 
 @api_bp.route('/ask', methods=['POST'])
+@jwt_required()
 def ask_question():
     data = request.get_json()
     query = data.get('query')
@@ -43,6 +44,7 @@ def ask_question():
     return jsonify({'answer': answer, 'relatedDocs': related_docs})
 
 @api_bp.route('/upload', methods=['POST'])
+@jwt_required()
 def upload_file():
     roles_string = request.form.get('roles')
     roles = roles_string.split(',')
@@ -74,11 +76,13 @@ def upload_file():
             return jsonify({'error': f'Failed to process document: {str(e)}'}), 500
 
 @api_bp.route('/documents', methods=['GET'])
+@jwt_required()
 def get_uploaded_documents():
     documents = list_uploaded_documents()
     return jsonify({'documents': documents})
 
 @api_bp.route('/delete', methods=['DELETE'])
+@jwt_required()
 def delete_document():
     data = request.get_json()
     doc_name = data.get('doc_name')

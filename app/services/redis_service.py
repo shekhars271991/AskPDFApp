@@ -43,7 +43,7 @@ def create_vector_index_chunk():
 
     redis_client.ft(CHUNK_INDEX_NAME).create_index(schema, definition=idx_def)
 
-def perform_vector_search_for_chunks(query_embedding, role, related_docs):
+def perform_vector_search_for_chunks(query_embedding, related_docs):
     # Convert query embedding to a binary format for Redis
     vector = np.array(query_embedding, dtype=np.float32).tobytes()   
     doc_name_filter = ""
@@ -51,8 +51,6 @@ def perform_vector_search_for_chunks(query_embedding, role, related_docs):
         if i > 0:
             doc_name_filter += " | "
         doc_name_filter += f"@doc_name:{doc}"    
-    
-
     
 
     q = Query(f'({doc_name_filter})=>[KNN 3 @vector $query_vec AS vector_score]')\
@@ -72,6 +70,7 @@ def perform_vector_search_for_chunks(query_embedding, role, related_docs):
 
 def create_vector_index_summary():
     schema = [
+        TagField("$.roles", as_name='roles'),
         VectorField('$.summary_embeddings', "HNSW", {
             "TYPE": 'FLOAT32',
             "DIM": 384,
@@ -88,12 +87,18 @@ def create_vector_index_summary():
 
     redis_client.ft(SUMMARY_INDEX_NAME).create_index(schema, definition=idx_def)
 
-def perform_vector_search_for_documents(query_embedding):
+def perform_vector_search_for_documents(query_embedding, roles):
     vector = np.array(query_embedding, dtype=np.float32).tobytes()
-    q = Query(f'(*)=>[KNN 2 @vector $query_vec AS vector_score]')\
+    role_filter = ""
+    for i, role in enumerate(roles):
+        if i > 0:
+            role_filter += " | "
+        role_filter += f"@roles:{{{role}}}"  
+        # role_filter = "*"
+    q = Query(f'({role_filter})=>[KNN 5 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
                 .return_fields('vector_score')\
-                .dialect(2)
+                .dialect(3)
 
 
     params = {"query_vec": vector}

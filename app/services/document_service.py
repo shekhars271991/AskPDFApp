@@ -66,15 +66,17 @@ def list_uploaded_documents():
 
 def get_docs_related_to_query(query, roles):
     query_embedding = get_embeddings(query)
-    doc_ids = perform_vector_search_for_documents(query_embedding, roles)
-    return clean_filenames(doc_ids)
+    doc_details = perform_vector_search_for_documents(query_embedding, roles)
+    return get_ids_and_roles(doc_details)
 
 
-def clean_filenames(filenames):
-    cleaned_filenames = []
-    for filename in filenames:
+def get_ids_and_roles(doc_details):
+    doc_id_and_role = []
+    for doc in doc_details:
+        doc_id = doc['id']
+        roles = doc['roles']
         # Remove the leading 'file_' and trailing '_metadata'
-        if filename.startswith('file_') and filename.endswith('_metadata'):
-            cleaned_filename = filename[len('file_'):-len('_metadata')]
-            cleaned_filenames.append(cleaned_filename)
-    return cleaned_filenames
+        if doc_id.startswith('file_') and doc_id.endswith('_metadata'):
+            cleaned_doc_id = doc_id[len('file_'):-len('_metadata')]
+            doc_id_and_role.append((cleaned_doc_id, roles))
+    return doc_id_and_role

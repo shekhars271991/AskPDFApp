@@ -5,9 +5,9 @@ from datetime import datetime
 import uuid
 
 
-def check_sematic_cache(query):
+def check_sematic_cache(query,roles):
     query_embedding = get_embeddings(query)
-    docs = perform_vector_search_for_cache(query_embedding)
+    docs = perform_vector_search_for_cache(query_embedding,roles)
     return docs
 
 
@@ -15,16 +15,27 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 
-def insert_in_semantic_cache(query, response):
+def generate_id_from_query(query):
+    # Create a SHA-256 hash object
+    hash_object = hashlib.sha256()
+    # Update the hash object with the bytes of the query
+    hash_object.update(query.encode('utf-8'))
+    # Get the hexadecimal representation of the hash
+    unique_id = hash_object.hexdigest()
+    return unique_id
+
+
+def insert_in_semantic_cache(query, response, access_level):
     query_embedding = get_embeddings(query)
-    unique_id = generate_uuid()
+    unique_id = generate_id_from_query(query)
     
     cache_key = f"semcache_{unique_id}"
     cache_value = {
         "query_embeddings": query_embedding.tolist(),
         "query":query,
         "response": response,
-        "createdAt": datetime.now().isoformat()
+        "createdAt": datetime.now().isoformat(),
+        "roles": access_level
     }
     set_json(cache_key, '.', cache_value)
 

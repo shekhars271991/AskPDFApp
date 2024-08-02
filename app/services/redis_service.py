@@ -6,6 +6,7 @@ from sentence_transformers import SentenceTransformer
 import redis
 import bcrypt
 from config.config import Config
+import json
 
 
 redis_client = redis.Redis(
@@ -97,14 +98,21 @@ def perform_vector_search_for_documents(query_embedding, roles):
         # role_filter = "*"
     q = Query(f'({role_filter})=>[KNN 5 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
-                .return_fields('vector_score')\
-                .dialect(3)
+                .return_fields('vector_score','roles')\
+                .dialect(4)
 
 
     params = {"query_vec": vector}
 
     results = redis_client.ft(SUMMARY_INDEX_NAME).search(q, query_params=params)
-    related_docs = [doc.id for doc in results.docs if float(doc.vector_score) <= 0.8]
+    # related_docs = [{'id': doc.id, 'roles': doc.roles} for doc in results.docs if float(doc.vector_score) <= 0.8]
+
+    # related_docs = [doc.id for doc in results.docs if float(doc.vector_score) <= 0.8]
+    related_docs = []
+    for doc in results.docs:
+        if float(doc.vector_score) <= 0.8:
+            roles = json.loads(doc.roles)
+            related_docs.append({'id': doc.id, 'roles': roles[0]})
 
     return related_docs
 
@@ -123,6 +131,7 @@ def get_json(key):
 
 def create_vector_index_cache():
     schema = [
+        TagField("$.roles", as_name='roles'),
         TagField("$.query", as_name='query'),
         TagField("$.response", as_name='response'),
         VectorField('$.query_embeddings', "HNSW", {
@@ -140,12 +149,17 @@ def create_vector_index_cache():
         pass
     redis_client.ft(CACHE_INDEX_NAME).create_index(schema, definition=idx_def)
 
-def perform_vector_search_for_cache(query_embedding):
+def perform_vector_search_for_cache(query_embedding,roles):
+    role_filter = ""
+    for i, role in enumerate(roles):
+        if i > 0:
+            role_filter += " | "
+        role_filter += f"@roles:{{{role}}}" 
     vector = np.array(query_embedding, dtype=np.float32).tobytes()
-    q = Query(f'(*)=>[KNN 1 @vector $query_vec AS vector_score]')\
+    q = Query(f'({role_filter})=>[KNN 1 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
                 .return_fields('vector_score', 'query', 'response')\
-                .dialect(2)
+                .dialect(4)
 
 
     params = {"query_vec": vector}

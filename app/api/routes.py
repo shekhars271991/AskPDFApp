@@ -21,7 +21,9 @@ def ask_question():
     data = request.get_json()
     query = data.get('query')
     jwt_identity = get_jwt_identity()
-    roles = jwt_identity.get('roles', [])
+    username = jwt_identity.get('username')
+    roles = jwt_identity.get('roles', []) + [username]
+    roles = [role.strip() for role in roles]
 
     skip_cache = request.args.get('skip_cache', default='no')
     # check in the semantic cache
@@ -48,14 +50,22 @@ def ask_question():
 @api_bp.route('/upload', methods=['POST'])
 @jwt_required()
 def upload_file():
-    jwt_identity = get_jwt_identity()
-    caller_role = jwt_identity.get('roles', []) #check if he is admin
-    caller_roles = caller_role.split(',')
     
-    request_data = request.get_json()
-    roles = request_data.get('roles', [])
-    if not isinstance(roles, list):
-        return jsonify({'error': 'Roles should be provided as a list in the request body'}), 400
+
+    jwt_identity = get_jwt_identity()
+    username = jwt_identity.get('username', "")
+    if(username == ""):
+        return jsonify({'error': 'missing username from auth token'}), 403
+    caller_roles = jwt_identity.get('roles', []) #check if he is admin
+    if 'admin' not in caller_roles:
+        roles = [username]
+    else:    
+        roles_string = request.form.get('roles')
+        roles = roles_string.split(',')  
+        roles = [role.strip() for role in roles]
+
+        if not isinstance(roles, list):
+            return jsonify({'error': 'Roles should be provided as form input'}), 400
 
     if 'file' not in request.files:
         return jsonify({'error': 'No file part in the request'}), 400

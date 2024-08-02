@@ -1,9 +1,9 @@
-import fitz
 import os
 import uuid
 from datetime import datetime
 from app.services.redis_service import set_json, get_keys, get_json, perform_vector_search_for_chunks, perform_vector_search_for_documents
 from app.services.embedding_service import get_embeddings
+import PyPDF2
 # from sentence_transformers import SentenceTransformer
 
 
@@ -12,12 +12,12 @@ UPLOAD_DIRECTORY = 'AskPDF/backend_llama/uploadedFiles'
 
 
 def extract_text_from_pdf(pdf_path):
-    doc = fitz.open(pdf_path)
-    text = ""
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        text += page.get_text()
-    return text
+    with open(pdf_path, "rb") as file:
+        reader = PyPDF2.PdfReader(file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        return text
 
 def chunk_text(text, chunk_size=500):
     words = text.split()
@@ -32,9 +32,9 @@ def get_unique_filename(filename):
     return unique_filename
 
 
-def get_context_from_similar_entries(query, role, related_docs):
+def get_context_from_similar_entries(query, related_docs):
     query_embedding = get_embeddings(query)
-    context = perform_vector_search_for_chunks(query_embedding, role, related_docs)
+    context = perform_vector_search_for_chunks(query_embedding, related_docs)
     return context
 
 def store_file_metadata(doc_name, original_filename, upload_time, roles, summary, summary_embeddings):
@@ -58,13 +58,15 @@ def list_uploaded_documents():
             metadata = get_json(key)
             documents.append({
                 "doc_name": doc_name,
-                "metadata": metadata
+                "uploaded_time":metadata['uploaded_time'],
+                "orignal_filename":metadata['original_filename'],
+                "summary":metadata['summary']
             })
     return documents
 
-def get_docs_related_to_query(query):
+def get_docs_related_to_query(query, roles):
     query_embedding = get_embeddings(query)
-    doc_ids = perform_vector_search_for_documents(query_embedding)
+    doc_ids = perform_vector_search_for_documents(query_embedding, roles)
     return clean_filenames(doc_ids)
 
 

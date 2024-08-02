@@ -4,9 +4,9 @@ from redis.commands.search.field import TextField, VectorField, TagField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from sentence_transformers import SentenceTransformer
 import redis
-
+import bcrypt
 from config.config import Config
-import redis
+
 
 redis_client = redis.Redis(
     host=Config.REDIS_HOST,
@@ -43,7 +43,7 @@ def create_vector_index_chunk():
 
     redis_client.ft(CHUNK_INDEX_NAME).create_index(schema, definition=idx_def)
 
-def perform_vector_search_for_chunks(query_embedding, role, related_docs):
+def perform_vector_search_for_chunks(query_embedding, related_docs):
     # Convert query embedding to a binary format for Redis
     vector = np.array(query_embedding, dtype=np.float32).tobytes()   
     doc_name_filter = ""
@@ -51,8 +51,6 @@ def perform_vector_search_for_chunks(query_embedding, role, related_docs):
         if i > 0:
             doc_name_filter += " | "
         doc_name_filter += f"@doc_name:{doc}"    
-    
-
     
 
     q = Query(f'({doc_name_filter})=>[KNN 3 @vector $query_vec AS vector_score]')\
@@ -72,6 +70,7 @@ def perform_vector_search_for_chunks(query_embedding, role, related_docs):
 
 def create_vector_index_summary():
     schema = [
+        TagField("$.roles", as_name='roles'),
         VectorField('$.summary_embeddings', "HNSW", {
             "TYPE": 'FLOAT32',
             "DIM": 384,
@@ -88,12 +87,18 @@ def create_vector_index_summary():
 
     redis_client.ft(SUMMARY_INDEX_NAME).create_index(schema, definition=idx_def)
 
-def perform_vector_search_for_documents(query_embedding):
+def perform_vector_search_for_documents(query_embedding, roles):
     vector = np.array(query_embedding, dtype=np.float32).tobytes()
-    q = Query(f'(*)=>[KNN 2 @vector $query_vec AS vector_score]')\
+    role_filter = ""
+    for i, role in enumerate(roles):
+        if i > 0:
+            role_filter += " | "
+        role_filter += f"@roles:{{{role}}}"  
+        # role_filter = "*"
+    q = Query(f'({role_filter})=>[KNN 5 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
                 .return_fields('vector_score')\
-                .dialect(2)
+                .dialect(3)
 
 
     params = {"query_vec": vector}
@@ -115,8 +120,6 @@ def set_json(key,path,value):
 def get_json(key):
     return redis_client.json().get(key)
 
-def get_json(key):
-    return redis_client.json().get(key)
 
 def create_vector_index_cache():
     schema = [
@@ -151,3 +154,19 @@ def perform_vector_search_for_cache(query_embedding):
     related_queries = [doc.id for doc in results.docs if float(doc.vector_score) <= 0.5]
 
     return related_queries
+
+
+def get_user(username):
+    keyname = f"user:{username}"
+    return redis_client.json().get(keyname)
+
+def add_user(username, password, roles):
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    user_data = {
+        "password": hashed_password.decode('utf-8'),
+        "roles": roles
+    }
+    redis_client.json().set(f"user:{username}", '.',user_data)
+
+def check_key(key):
+    return redis_client.exists(key)

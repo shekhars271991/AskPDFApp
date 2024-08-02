@@ -8,6 +8,7 @@ from app.services.file_description_service import summarize_llama
 from app.services.sematic_cache_service import insert_in_semantic_cache, check_sematic_cache, get_data_from_cache
 import os
 from datetime import datetime
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
 api_bp = Blueprint('api', __name__)
@@ -15,10 +16,14 @@ UPLOAD_DIRECTORY = 'app/uploadedFiles'
 
 
 @api_bp.route('/ask', methods=['POST'])
+@jwt_required()
 def ask_question():
     data = request.get_json()
     query = data.get('query')
-    role = data.get('role')
+    jwt_identity = get_jwt_identity()
+    username = jwt_identity.get('username')
+    roles = jwt_identity.get('roles', []) + [username]
+    roles = [role.strip() for role in roles]
 
     skip_cache = request.args.get('skip_cache', default='no')
     # check in the semantic cache
@@ -29,13 +34,13 @@ def ask_question():
             return jsonify({'answer': resp['response'], 'relatedQuery': resp['query']})
     
     # Retrieve related documents based on the query
-    related_docs = get_docs_related_to_query(query)
+    related_docs = get_docs_related_to_query(query, roles)
 
     # Check if related_docs is None or empty
     if not related_docs:
         return jsonify({'answer': "No related documents found.", 'relatedDocs': []})
 
-    context = get_context_from_similar_entries(query, role, related_docs)
+    context = get_context_from_similar_entries(query, related_docs)
     answer = ask_llama(context, query)
     # insert in semantic cache
     insert_in_semantic_cache(query, answer)
@@ -43,9 +48,25 @@ def ask_question():
     return jsonify({'answer': answer, 'relatedDocs': related_docs})
 
 @api_bp.route('/upload', methods=['POST'])
+@jwt_required()
 def upload_file():
-    roles_string = request.form.get('roles')
-    roles = roles_string.split(',')
+    
+
+    jwt_identity = get_jwt_identity()
+    username = jwt_identity.get('username', "")
+    if(username == ""):
+        return jsonify({'error': 'missing username from auth token'}), 403
+    caller_roles = jwt_identity.get('roles', []) #check if he is admin
+    if 'admin' not in caller_roles:
+        roles = [username]
+    else:    
+        roles_string = request.form.get('roles')
+        roles = roles_string.split(',')  
+        roles = [role.strip() for role in roles]
+
+        if not isinstance(roles, list):
+            return jsonify({'error': 'Roles should be provided as form input'}), 400
+
     if 'file' not in request.files:
         return jsonify({'error': 'No file part in the request'}), 400
 
@@ -57,7 +78,6 @@ def upload_file():
         unique_filename = get_unique_filename(file.filename)
         file_path = os.path.join(UPLOAD_DIRECTORY, unique_filename)
         file.save(file_path)
-        # Process the PDF
         try:
             doc_name = os.path.splitext(unique_filename)[0]
             upload_time = datetime.now().isoformat()
@@ -74,11 +94,13 @@ def upload_file():
             return jsonify({'error': f'Failed to process document: {str(e)}'}), 500
 
 @api_bp.route('/documents', methods=['GET'])
+@jwt_required()
 def get_uploaded_documents():
     documents = list_uploaded_documents()
     return jsonify({'documents': documents})
 
 @api_bp.route('/delete', methods=['DELETE'])
+@jwt_required()
 def delete_document():
     data = request.get_json()
     doc_name = data.get('doc_name')

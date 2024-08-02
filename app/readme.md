@@ -23,8 +23,8 @@ This Flask application provides functionality for uploading PDF documents, extra
 2. **Create and Activate a Virtual Environment**
 
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    python -m venv streamlitappenv
+    source streamlitappenv/bin/activate  # On Windows use `venv\Scripts\activate`
     ```
 
 3. **Install Dependencies**

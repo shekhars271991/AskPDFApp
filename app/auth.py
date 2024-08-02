@@ -7,10 +7,14 @@ from app.services.redis_service import get_user, check_key, add_user
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+def login(param):
+    if(param):
+        username = param.username,
+        password = param.password
+    else:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
     user = get_user(username)
     if user:
         if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):

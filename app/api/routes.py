@@ -112,7 +112,10 @@ def upload_file():
 @api_bp.route('/documents', methods=['GET'])
 @jwt_required()
 def get_uploaded_documents():
-    documents = list_uploaded_documents()
+    jwt_identity = get_jwt_identity()
+    username = jwt_identity.get('username', "")
+    roles = jwt_identity.get('roles', []) + [username]
+    documents = list_uploaded_documents(roles)
     return jsonify({'documents': documents})
 
 @api_bp.route('/delete', methods=['DELETE'])

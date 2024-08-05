@@ -1,7 +1,12 @@
 import os
 import uuid
 from datetime import datetime
-from app.services.redis_service import set_json, get_keys, get_json, perform_vector_search_for_chunks, perform_vector_search_for_documents
+from app.services.redis_service import (set_json, 
+                                        get_keys, 
+                                        get_json, 
+                                        perform_vector_search_for_chunks, 
+                                        perform_vector_search_for_documents, 
+                                        get_user_docs)
 from app.services.embedding_service import get_embeddings
 import PyPDF2
 # from sentence_transformers import SentenceTransformer
@@ -49,20 +54,21 @@ def store_file_metadata(doc_name, original_filename, upload_time, roles, summary
     }
     set_json(metadata_key, '.', metadata)
 
-def list_uploaded_documents():
-    document_keys = get_keys('file_*')
-    documents = []
-    for key in document_keys:
-        if key.decode('utf-8').endswith('_metadata'):
-            doc_name = key.decode('utf-8').split('_metadata')[0].split('file_')[1]
-            metadata = get_json(key)
-            documents.append({
-                "doc_name": doc_name,
-                "uploaded_time":metadata['uploaded_time'],
-                "orignal_filename":metadata['original_filename'],
-                "summary":metadata['summary']
-            })
-    return documents
+def list_uploaded_documents(roles):
+    userdocs = get_user_docs(roles)
+    # document_keys = get_keys('file_*')
+    # documents = []
+    # for key in document_keys:
+    #     if key.decode('utf-8').endswith('_metadata'):
+    #         doc_name = key.decode('utf-8').split('_metadata')[0].split('file_')[1]
+    #         metadata = get_json(key)
+    #         documents.append({
+    #             "doc_name": doc_name,
+    #             "uploaded_time":metadata['uploaded_time'],
+    #             "orignal_filename":metadata['original_filename'],
+    #             "summary":metadata['summary']
+    #         })
+    return userdocs
 
 def get_docs_related_to_query(query, roles):
     query_embedding = get_embeddings(query)

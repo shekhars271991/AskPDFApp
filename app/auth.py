@@ -15,7 +15,10 @@ def login():
     if user:
         if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             access_token = create_access_token(identity={ 'username':username, 'roles': user['roles']})
-            return jsonify(access_token=access_token), 200
+            return jsonify({
+                'access_token': access_token,
+                'roles': user['roles']  # Include roles in the response payload
+            }), 200
         else:
             return jsonify({"error": "Invalid credentials"}), 401
     else:

@@ -12,7 +12,8 @@ import json
 redis_client = redis.Redis(
     host=Config.REDIS_HOST,
     port=Config.REDIS_PORT,
-    db=Config.REDIS_DB
+    db=Config.REDIS_DB,
+    # password=Config.REDIS_PASSWORD
 )
 
 # Your existing code for Redis interactions

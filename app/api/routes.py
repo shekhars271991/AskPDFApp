@@ -25,7 +25,7 @@ def ask_question():
     roles = jwt_identity.get('roles', []) + [username]
     roles = [role.strip() for role in roles]
 
-    skip_cache = request.args.get('skip_cache', default='no')
+    skip_cache = request.args.get('skip_cache', default='yes')
     # check in the semantic cache
     if(skip_cache == 'no'):
         related_queries = check_sematic_cache(query,roles)
@@ -56,6 +56,9 @@ def ask_question():
         return jsonify({'answer': "No related documents found.", 'relatedDocs': []})
 
     context = get_context_from_similar_entries(query, doc_ids)
+    test_db_perf = request.args.get('test_db_perf', default='no')
+    if test_db_perf == 'yes':
+        return jsonify({'answer': "skiping llm call", 'context': context})
     answer = ask_llama(context, query)
 
     # insert in semantic cache
@@ -77,6 +80,8 @@ def upload_file():
         roles = [username]
     else:    
         roles_string = request.form.get('roles')
+        if roles_string is None or roles_string == "":
+            return jsonify({'error': 'missing roles for the doc'}), 403
         roles = roles_string.split(',')  
         roles = [role.strip() for role in roles]
 

@@ -5,12 +5,14 @@ import concurrent.futures
 from sentence_transformers import SentenceTransformer
 from redis.commands.search.query import Query
 import json
+from tabulate import tabulate
+
 
 # Number of concurrent requests
-NUM_WORKERS = 50
+NUM_WORKERS = 80
 
 # Number of iterations per worker
-NUM_ITERATIONS = 100
+NUM_ITERATIONS = 50
 
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
@@ -68,8 +70,10 @@ def perform_vector_search_for_documents(query_embedding, roles):
         print(f"Error in perform_vector_search_for_documents: {e}")
         return [], 0
 
-def stress_test_worker():
+def stress_test_worker(worker_id):
     total_response_time = 0
+    worker_start_time = time.time()
+
     for _ in range(NUM_ITERATIONS):
         try:
             query_embedding = get_embeddings(QUERY)
@@ -81,21 +85,35 @@ def stress_test_worker():
             total_response_time += response_time
             time.sleep(0.01)
         except Exception as e:
-            print(f"Error in stress_test_worker: {e}")
+            print(f"Error in stress_test_worker {worker_id}: {e}")
 
     average_response_time = total_response_time / NUM_ITERATIONS
-    print(f"Average Response Time for this thread: {average_response_time:.2f} ms")
+    worker_end_time = time.time()
+
+    # Return the details for the current thread
+    return {
+        "Worker ID": worker_id,
+        "Start Time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(worker_start_time)),
+        "End Time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(worker_end_time)),
+        "Average Response Time (ms)": f"{average_response_time:.2f} ms"
+    }
 
 if __name__ == "__main__":
     try:
         start_time = time.time()
 
         # Run the stress test with multiple workers
+        results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_WORKERS) as executor:
-            futures = [executor.submit(stress_test_worker) for _ in range(NUM_WORKERS)]
-            concurrent.futures.wait(futures)
+            futures = [executor.submit(stress_test_worker, i) for i in range(NUM_WORKERS)]
+            for future in concurrent.futures.as_completed(futures):
+                results.append(future.result())
 
         end_time = time.time()
         print(f"Stress test completed in {end_time - start_time:.2f} seconds.")
+
+        # Display the results in a tabular format
+        print(tabulate(results, headers="keys", tablefmt="pretty"))
+
     except Exception as e:
         print(f"Error in main: {e}")

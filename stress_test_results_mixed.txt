@@ -1,0 +1,46 @@
+QPS 8
+
+Workers: 1, Iterations per worker: 50, Overall Average Response Time (ms): 305.41 ms
+Total Reads: 25, Total Writes: 25
+
+Workers: 8, Iterations per worker: 50, Overall Average Response Time (ms): 333.28 ms
+Total Reads: 193, Total Writes: 207
+
+Workers: 16, Iterations per worker: 50, Overall Average Response Time (ms): 351.59 ms
+Total Reads: 393, Total Writes: 407
+
+Workers: 32, Iterations per worker: 50, Overall Average Response Time (ms): 446.58 ms
+Total Reads: 789, Total Writes: 811
+
+Workers: 64, Iterations per worker: 50, Overall Average Response Time (ms): 590.37 ms
+Total Reads: 1621, Total Writes: 1579
+
+Workers: 128, Iterations per worker: 50, Overall Average Response Time (ms): 942.87 ms
+Total Reads: 3205, Total Writes: 3195
+
+Workers: 256, Iterations per worker: 50, Overall Average Response Time (ms): 1673.89 ms
+Total Reads: 6423, Total Writes: 6377
+
+
+QPS 1
+
+Workers: 1, Iterations per worker: 50, Overall Average Response Time (ms): 284.30 ms
+Total Reads: 25, Total Writes: 25
+
+Workers: 8, Iterations per worker: 50, Overall Average Response Time (ms): 339.03 ms
+Total Reads: 194, Total Writes: 206
+
+Workers: 16, Iterations per worker: 50, Overall Average Response Time (ms): 352.32 ms
+Total Reads: 404, Total Writes: 396
+
+Workers: 32, Iterations per worker: 50, Overall Average Response Time (ms): 411.62 ms
+Total Reads: 807, Total Writes: 793
+
+Workers: 64, Iterations per worker: 50, Overall Average Response Time (ms): 591.16 ms
+Total Reads: 1624, Total Writes: 1576
+
+Workers: 128, Iterations per worker: 50, Overall Average Response Time (ms): 956.79 ms
+Total Reads: 3171, Total Writes: 3229
+
+Workers: 256, Iterations per worker: 50, Overall Average Response Time (ms): 1702.22 ms
+Total Reads: 6459, Total Writes: 6341

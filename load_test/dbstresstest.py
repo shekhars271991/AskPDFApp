@@ -9,14 +9,31 @@ from tabulate import tabulate
 
 
 # Number of concurrent requests
-NUM_WORKERS = 8
+NUM_WORKERS = 320
 
 # Number of iterations per worker
 NUM_ITERATIONS = 50
 
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
+# REDIS_HOST = 'localhost'
+# REDIS_PORT = 6379
+# REDIS_DB = 0
+
+# # cloud - QPS1
+# REDIS_HOST="redis-18217.c32732.ap-south-1-mz.ec2.cloud.rlrcp.com"
+# REDIS_PORT=18217
+# REDIS_PASSWORD="98BJB7EgQTR4HoWsLWzcEJPgv0EwAVgm"
+# REDIS_DB = 0
+
+
+
+# cloud - QPS8
+REDIS_HOST="redis-12961.c32734.ap-south-1-mz.ec2.cloud.rlrcp.com"
+REDIS_PORT=12961
+REDIS_PASSWORD="chuHwnfJ7lSiynWAhX2BrZSOTG0CamMv"
 REDIS_DB = 0
+
+
+
 SUMMARY_INDEX_NAME = "idxsumm"
 QUERY = "tell me some details about trigovex company"
 
@@ -26,6 +43,13 @@ redis_client = redis.Redis(
     host=REDIS_HOST,
     port=REDIS_PORT,
     db=REDIS_DB,
+)
+
+redis_client = redis.Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    db=REDIS_DB,
+    password=REDIS_PASSWORD
 )
 
 def get_embeddings(chunks):

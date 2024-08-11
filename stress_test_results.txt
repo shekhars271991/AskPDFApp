@@ -1,3 +1,24 @@
 Workers: 80, Iterations per worker: 50, Overall Average Response Time (ms): 1.91 ms
 Workers: 40, Iterations per worker: 50, Overall Average Response Time (ms): 1.65 ms
 Workers: 8, Iterations per worker: 50, Overall Average Response Time (ms): 1.14 ms
+Workers: 8, Iterations per worker: 50, Overall Average Response Time (ms): 1.03 ms
+
+
+Cloud- QPS1
+Workers: 8, Iterations per worker: 50, Overall Average Response Time (ms): 37.05 ms
+Workers: 16, Iterations per worker: 50, Overall Average Response Time (ms): 34.33 ms
+Workers: 32, Iterations per worker: 50, Overall Average Response Time (ms): 32.86 ms
+Workers: 64, Iterations per worker: 50, Overall Average Response Time (ms): 37.69 ms
+Workers: 80, Iterations per worker: 50, Overall Average Response Time (ms): 36.13 ms
+Workers: 160, Iterations per worker: 50, Overall Average Response Time (ms): 41.60 ms
+Workers: 320, Iterations per worker: 50, Overall Average Response Time (ms): 132.29 ms
+
+
+Cloud - QPS8
+Workers: 8, Iterations per worker: 50, Overall Average Response Time (ms): 34.11 ms
+Workers: 16, Iterations per worker: 50, Overall Average Response Time (ms): 31.76 ms
+Workers: 32, Iterations per worker: 50, Overall Average Response Time (ms): 35.10 ms
+Workers: 64, Iterations per worker: 50, Overall Average Response Time (ms): 36.76 ms
+Workers: 80, Iterations per worker: 50, Overall Average Response Time (ms): 38.12 ms
+Workers: 160, Iterations per worker: 50, Overall Average Response Time (ms): 37.74 ms
+Workers: 320, Iterations per worker: 50, Overall Average Response Time (ms): 47.98 ms

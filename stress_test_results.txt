@@ -1,0 +1,3 @@
+Workers: 80, Iterations per worker: 50, Overall Average Response Time (ms): 1.91 ms
+Workers: 40, Iterations per worker: 50, Overall Average Response Time (ms): 1.65 ms
+Workers: 8, Iterations per worker: 50, Overall Average Response Time (ms): 1.14 ms

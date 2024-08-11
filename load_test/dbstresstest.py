@@ -9,7 +9,7 @@ from tabulate import tabulate
 
 
 # Number of concurrent requests
-NUM_WORKERS = 80
+NUM_WORKERS = 8
 
 # Number of iterations per worker
 NUM_ITERATIONS = 50
@@ -98,6 +98,21 @@ def stress_test_worker(worker_id):
         "Average Response Time (ms)": f"{average_response_time:.2f} ms"
     }
 
+def write_results_to_file(filename, results, num_workers, num_iterations):
+    try:
+        # Calculate the overall average response time
+        total_response_time = sum(float(result["Average Response Time (ms)"].split()[0]) for result in results)
+        overall_average_response_time = total_response_time / len(results)
+
+        # Write the results to the file
+        with open(filename, "a") as f:
+            f.write(f"Workers: {num_workers}, Iterations per worker: {num_iterations}, "
+                    f"Overall Average Response Time (ms): {overall_average_response_time:.2f} ms\n")
+
+        print(f"Results written to {filename}.")
+    except Exception as e:
+        print(f"Error writing results to file: {e}")
+
 if __name__ == "__main__":
     try:
         start_time = time.time()
@@ -114,6 +129,9 @@ if __name__ == "__main__":
 
         # Display the results in a tabular format
         print(tabulate(results, headers="keys", tablefmt="pretty"))
+
+        # Write the overall average response time to a file
+        write_results_to_file("stress_test_results.txt", results, NUM_WORKERS, NUM_ITERATIONS)
 
     except Exception as e:
         print(f"Error in main: {e}")

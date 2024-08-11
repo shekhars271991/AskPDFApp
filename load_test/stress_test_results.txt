@@ -1,0 +1,6 @@
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 5.46 ms
+Total number of DB calls: 12800
+Total time taken: 0.92 seconds
+Operations per second: 13849.96 ops/sec

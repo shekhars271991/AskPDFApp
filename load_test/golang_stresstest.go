@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
@@ -12,32 +13,32 @@ import (
 	"github.com/google/uuid"
 )
 
-// const (
-// 	numWorkers       = 1
-// 	numIterations    = 1
-// 	redisHost        = "redis-18217.c32732.ap-south-1-mz.ec2.cloud.rlrcp.com"
-// 	redisPort        = "18217"
-// 	redisPassword    = "98BJB7EgQTR4HoWsLWzcEJPgv0EwAVgm"
-// 	summaryIndexName = "idxsumm"
-// 	query            = "tell me some details about trigovex company"
-// )
-
 const (
 	numWorkers       = 256
 	numIterations    = 50
-	redisHost        = "localhost"
-	redisPort        = "6379"
+	redisHost        = "redis-18217.c32732.ap-south-1-mz.ec2.cloud.rlrcp.com"
+	redisPort        = "18217"
+	redisPassword    = "98BJB7EgQTR4HoWsLWzcEJPgv0EwAVgm"
 	summaryIndexName = "idxsumm"
 	query            = "tell me some details about trigovex company"
 )
+
+// const (
+// 	numWorkers       = 256
+// 	numIterations    = 50
+// 	redisHost        = "localhost"
+// 	redisPort        = "6379"
+// 	summaryIndexName = "idxsumm"
+// 	query            = "tell me some details about trigovex company"
+// )
 
 var rdb *redis.Client
 
 func init() {
 	rdb = redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:%s", redisHost, redisPort),
-		// Password: redisPassword,
-		DB: 0,
+		Addr:     fmt.Sprintf("%s:%s", redisHost, redisPort),
+		Password: redisPassword,
+		DB:       0,
 	})
 }
 
@@ -131,7 +132,6 @@ func stressTestWorker(workerID int, wg *sync.WaitGroup, resultsChan chan<- map[s
 		"Writes":                writeCount,
 	}
 }
-
 func main() {
 	start := time.Now()
 	var wg sync.WaitGroup
@@ -145,14 +145,25 @@ func main() {
 	wg.Wait()
 	close(resultsChan)
 
+	var totalResponseTime float64
+	var totalReads, totalWrites int
 	var results []map[string]interface{}
 	for result := range resultsChan {
+		totalResponseTime += parseFloat(result["Average Response Time"].(string))
+		totalReads += result["Reads"].(int)
+		totalWrites += result["Writes"].(int)
 		results = append(results, result)
 	}
 
 	end := time.Now()
-	fmt.Printf("Stress test completed in %.2f seconds.\n", end.Sub(start).Seconds())
+	totalTimeTaken := end.Sub(start).Seconds()
+	totalDbCalls := totalReads + totalWrites
+	avgResponseTime := totalResponseTime / float64(numWorkers)
+	opsPerSec := float64(totalDbCalls) / totalTimeTaken
 
+	fmt.Printf("Stress test completed in %.2f seconds.\n", totalTimeTaken)
+
+	// Print the results to console
 	fmt.Println("Results:")
 	for _, result := range results {
 		fmt.Printf("Worker ID: %d\n", result["Worker ID"])
@@ -161,4 +172,53 @@ func main() {
 		fmt.Printf("Writes: %d\n", result["Writes"])
 		fmt.Println("--------------------------")
 	}
+
+	// Write results to a file
+	filename := "stress_test_results_go.txt"
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("Error opening file: %v\n", err)
+		return
+	}
+	defer file.Close()
+
+	// Writing to file and checking error after each operation
+	_, err = file.WriteString(fmt.Sprintf("Number of workers: %d\n", numWorkers))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	_, err = file.WriteString(fmt.Sprintf("Number of iterations: %d\n", numIterations))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	_, err = file.WriteString(fmt.Sprintf("Average time taken per DB request: %.2f ms\n", avgResponseTime))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	_, err = file.WriteString(fmt.Sprintf("Total number of DB calls: %d\n", totalDbCalls))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	_, err = file.WriteString(fmt.Sprintf("Total time taken: %.2f seconds\n", totalTimeTaken))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	_, err = file.WriteString(fmt.Sprintf("Operations per second: %.2f ops/sec\n", opsPerSec))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	} else {
+		fmt.Printf("Results written to %s.\n", filename)
+	}
+}
+
+// Helper function to parse float from string
+func parseFloat(s string) float64 {
+	var value float64
+	fmt.Sscanf(s, "%f", &value)
+	return value
 }

@@ -1,0 +1,33 @@
+local
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 7.32 ms
+Total number of DB calls: 12800
+Total time taken: 1.14 seconds
+Operations per second: 11248.40 ops/sec
+
+Cloud - QPS1
+
+
+Number of workers: 1
+Number of iterations: 1
+Average time taken per DB request: 666.04 ms
+Total number of DB calls: 1
+Total time taken: 0.68 seconds
+Operations per second: 1.48 ops/sec
+
+
+Number of workers: 64
+Number of iterations: 50
+Average time taken per DB request: 94.64 ms
+Total number of DB calls: 3200
+Total time taken: 9.29 seconds
+Operations per second: 344.42 ops/sec
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 370.85 ms
+Total number of DB calls: 12800
+Total time taken: 31.51 seconds
+Operations per second: 406.23 ops/sec

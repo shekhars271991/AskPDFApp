@@ -9,25 +9,241 @@ Operations per second: 11248.40 ops/sec
 
 Cloud - QPS1
 
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 367.33 ms
+Total number of DB calls: 12800
+Total Reads: 6366
+Total Writes: 6434
+Total time taken: 30.71 seconds
+Operations per second: 416.82 ops/sec
 
-Number of workers: 1
-Number of iterations: 1
-Average time taken per DB request: 666.04 ms
-Total number of DB calls: 1
-Total time taken: 0.68 seconds
-Operations per second: 1.48 ops/sec
+--------------------------
 
+Number of workers: 128
+Number of iterations: 50
+Average time taken per DB request: 167.31 ms
+Total number of DB calls: 6400
+Total Reads: 3171
+Total Writes: 3229
+Total time taken: 16.87 seconds
+Operations per second: 379.34 ops/sec
+
+--------------------------
 
 Number of workers: 64
 Number of iterations: 50
-Average time taken per DB request: 94.64 ms
+Average time taken per DB request: 90.74 ms
 Total number of DB calls: 3200
-Total time taken: 9.29 seconds
-Operations per second: 344.42 ops/sec
+Total Reads: 1629
+Total Writes: 1571
+Total time taken: 8.74 seconds
+Operations per second: 366.09 ops/sec
+
+--------------------------
+
+Number of workers: 32
+Number of iterations: 50
+Average time taken per DB request: 58.52 ms
+Total number of DB calls: 1600
+Total Reads: 794
+Total Writes: 806
+Total time taken: 4.97 seconds
+Operations per second: 322.04 ops/sec
+
+--------------------------
+
+Number of workers: 16
+Number of iterations: 50
+Average time taken per DB request: 56.49 ms
+Total number of DB calls: 800
+Total Reads: 402
+Total Writes: 398
+Total time taken: 4.91 seconds
+Operations per second: 162.85 ops/sec
+
+--------------------------
+
+Number of workers: 8
+Number of iterations: 50
+Average time taken per DB request: 58.76 ms
+Total number of DB calls: 400
+Total Reads: 224
+Total Writes: 176
+Total time taken: 4.99 seconds
+Operations per second: 80.24 ops/sec
+
+--------------------------
+Cloud - QPS8
 
 Number of workers: 256
 Number of iterations: 50
-Average time taken per DB request: 370.85 ms
+Average time taken per DB request: 374.46 ms
 Total number of DB calls: 12800
-Total time taken: 31.51 seconds
-Operations per second: 406.23 ops/sec
+Total Reads: 6414
+Total Writes: 6386
+Total time taken: 31.22 seconds
+Operations per second: 410.03 ops/sec
+
+--------------------------
+
+Number of workers: 128
+Number of iterations: 50
+Average time taken per DB request: 170.93 ms
+Total number of DB calls: 6400
+Total Reads: 3232
+Total Writes: 3168
+Total time taken: 19.43 seconds
+Operations per second: 329.37 ops/sec
+
+--------------------------
+
+Number of workers: 64
+Number of iterations: 50
+Average time taken per DB request: 97.47 ms
+Total number of DB calls: 3200
+Total Reads: 1578
+Total Writes: 1622
+Total time taken: 8.76 seconds
+Operations per second: 365.36 ops/sec
+
+--------------------------
+
+Number of workers: 32
+Number of iterations: 50
+Average time taken per DB request: 59.45 ms
+Total number of DB calls: 1600
+Total Reads: 779
+Total Writes: 821
+Total time taken: 4.82 seconds
+Operations per second: 331.96 ops/sec
+
+--------------------------
+
+Number of workers: 16
+Number of iterations: 50
+Average time taken per DB request: 54.81 ms
+Total number of DB calls: 800
+Total Reads: 410
+Total Writes: 390
+Total time taken: 4.65 seconds
+Operations per second: 171.94 ops/sec
+
+--------------------------
+
+Number of workers: 8
+Number of iterations: 50
+Average time taken per DB request: 51.54 ms
+Total number of DB calls: 400
+Total Reads: 189
+Total Writes: 211
+Total time taken: 4.18 seconds
+Operations per second: 95.70 ops/sec
+
+--------------------------
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 375.52 ms
+Total number of DB calls: 12800
+Total Reads: 6432
+Total Writes: 6368
+Total time taken: 30.82 seconds
+Operations per second: 415.26 ops/sec
+
+--------------------------
+
+
+Bulk run 1 - QPS 1
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 347.85 ms
+Total number of DB calls: 12800
+Total Reads: 6407
+Total Writes: 6393
+Total time taken: 38.35 seconds
+Operations per second: 333.81 ops/sec
+
+--------------------------
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 318.70 ms
+Total number of DB calls: 12800
+Total Reads: 6482
+Total Writes: 6318
+Total time taken: 41.41 seconds
+Operations per second: 309.14 ops/sec
+
+--------------------------
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 406.00 ms
+Total number of DB calls: 12800
+Total Reads: 6387
+Total Writes: 6413
+Total time taken: 40.55 seconds
+Operations per second: 315.66 ops/sec
+
+--------------------------
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 562.00 ms
+Total number of DB calls: 12800
+Total Reads: 6339
+Total Writes: 6461
+Total time taken: 47.07 seconds
+Operations per second: 271.96 ops/sec
+
+--------------------------
+
+Bulk run 1 - QPS 8
+--------------------------
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 278.07 ms
+Total number of DB calls: 12800
+Total Reads: 6306
+Total Writes: 6494
+Total time taken: 25.33 seconds
+Operations per second: 505.31 ops/sec
+
+--------------------------
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 500.60 ms
+Total number of DB calls: 12800
+Total Reads: 6378
+Total Writes: 6422
+Total time taken: 59.85 seconds
+Operations per second: 213.88 ops/sec
+
+--------------------------
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 731.71 ms
+Total number of DB calls: 12800
+Total Reads: 6479
+Total Writes: 6321
+Total time taken: 64.67 seconds
+Operations per second: 197.93 ops/sec
+
+--------------------------
+
+Number of workers: 256
+Number of iterations: 50
+Average time taken per DB request: 883.08 ms
+Total number of DB calls: 12800
+Total Reads: 6357
+Total Writes: 6443
+Total time taken: 71.18 seconds
+Operations per second: 179.82 ops/sec
+
+--------------------------
+

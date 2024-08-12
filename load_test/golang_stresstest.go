@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// QPS1
 const (
 	numWorkers       = 256
 	numIterations    = 50
@@ -23,11 +24,13 @@ const (
 	query            = "tell me some details about trigovex company"
 )
 
+// QPS8
 // const (
 // 	numWorkers       = 256
 // 	numIterations    = 50
-// 	redisHost        = "localhost"
-// 	redisPort        = "6379"
+// 	redisHost        = "redis-12961.c32734.ap-south-1-mz.ec2.cloud.rlrcp.com"
+// 	redisPort        = "12961"
+// 	redisPassword    = "chuHwnfJ7lSiynWAhX2BrZSOTG0CamMv"
 // 	summaryIndexName = "idxsumm"
 // 	query            = "tell me some details about trigovex company"
 // )
@@ -121,7 +124,7 @@ func stressTestWorker(workerID int, wg *sync.WaitGroup, resultsChan chan<- map[s
 			writeCount++
 		}
 
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(time.Millisecond)
 	}
 
 	averageResponseTime := totalResponseTime / numIterations
@@ -132,6 +135,7 @@ func stressTestWorker(workerID int, wg *sync.WaitGroup, resultsChan chan<- map[s
 		"Writes":                writeCount,
 	}
 }
+
 func main() {
 	start := time.Now()
 	var wg sync.WaitGroup
@@ -147,12 +151,10 @@ func main() {
 
 	var totalResponseTime float64
 	var totalReads, totalWrites int
-	var results []map[string]interface{}
 	for result := range resultsChan {
 		totalResponseTime += parseFloat(result["Average Response Time"].(string))
 		totalReads += result["Reads"].(int)
 		totalWrites += result["Writes"].(int)
-		results = append(results, result)
 	}
 
 	end := time.Now()
@@ -161,17 +163,8 @@ func main() {
 	avgResponseTime := totalResponseTime / float64(numWorkers)
 	opsPerSec := float64(totalDbCalls) / totalTimeTaken
 
+	// Output total time taken to console
 	fmt.Printf("Stress test completed in %.2f seconds.\n", totalTimeTaken)
-
-	// Print the results to console
-	fmt.Println("Results:")
-	for _, result := range results {
-		fmt.Printf("Worker ID: %d\n", result["Worker ID"])
-		fmt.Printf("Average Response Time: %s\n", result["Average Response Time"])
-		fmt.Printf("Reads: %d\n", result["Reads"])
-		fmt.Printf("Writes: %d\n", result["Writes"])
-		fmt.Println("--------------------------")
-	}
 
 	// Write results to a file
 	filename := "stress_test_results_go.txt"
@@ -203,12 +196,27 @@ func main() {
 		fmt.Printf("Error writing to file: %v\n", err)
 	}
 
+	_, err = file.WriteString(fmt.Sprintf("Total Reads: %d\n", totalReads))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	_, err = file.WriteString(fmt.Sprintf("Total Writes: %d\n", totalWrites))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
 	_, err = file.WriteString(fmt.Sprintf("Total time taken: %.2f seconds\n", totalTimeTaken))
 	if err != nil {
 		fmt.Printf("Error writing to file: %v\n", err)
 	}
 
 	_, err = file.WriteString(fmt.Sprintf("Operations per second: %.2f ops/sec\n", opsPerSec))
+	if err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	_, err = file.WriteString("\n--------------------------\n\n")
 	if err != nil {
 		fmt.Printf("Error writing to file: %v\n", err)
 	} else {

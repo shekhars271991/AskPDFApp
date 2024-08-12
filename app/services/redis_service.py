@@ -209,3 +209,9 @@ def add_user(username, password, roles):
 
 def check_key(key):
     return redis_client.exists(key)
+
+
+def add_to_stream(stream_name, data):
+    r = redis.StrictRedis(host='localhost', port=6379, db=0)
+    r.xadd(stream_name, data)
+ 

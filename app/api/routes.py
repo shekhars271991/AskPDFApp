@@ -9,6 +9,8 @@ from app.services.sematic_cache_service import insert_in_semantic_cache, check_s
 import os
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.services.redis_service import add_to_stream
+
 
 
 api_bp = Blueprint('api', __name__)
@@ -69,8 +71,6 @@ def ask_question():
 @api_bp.route('/upload', methods=['POST'])
 @jwt_required()
 def upload_file():
-    
-
     jwt_identity = get_jwt_identity()
     username = jwt_identity.get('username', "")
     if(username == ""):
@@ -102,17 +102,20 @@ def upload_file():
         try:
             doc_name = os.path.splitext(unique_filename)[0]
             upload_time = datetime.now().isoformat()
-            text = extract_text_from_pdf(file_path)
-            # get doc summary
-            summary = summarize_llama(text)
-            summary_embeddings = get_embeddings(summary).tolist()
-            chunks = chunk_text(text)
-            embeddings = get_embeddings(chunks)
-            store_file_metadata(doc_name, file.filename, upload_time, roles, summary, summary_embeddings)
-            store_chunks_in_vectorDB(doc_name, chunks, embeddings, roles)
-            return jsonify({'message': 'Document processed and embeddings stored in Redis'}), 200
+
+            # Add to Redis stream for asynchronous processing
+            task_data = {
+                'doc_name': doc_name,
+                'original_filename': file.filename,
+                'file_path': file_path,
+                'upload_time': upload_time,
+                'roles': ','.join(roles)
+            }
+            add_to_stream('document_upload_stream', task_data)
+            return jsonify({'message': 'Document enqueued for processing'}), 200
+
         except Exception as e:
-            return jsonify({'error': f'Failed to process document: {str(e)}'}), 500
+            return jsonify({'error': f'Failed to enqueue document: {str(e)}'}), 500
 
 @api_bp.route('/documents', methods=['GET'])
 @jwt_required()

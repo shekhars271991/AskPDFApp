@@ -8,10 +8,11 @@ r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 def process_upload(entry_id, data):
     try:
-        doc_name = data['doc_name']
-        file_path = data['file_path']
-        roles = data['roles'].split(',')
-        upload_time = data['upload_time']
+        # Decode byte strings to regular strings
+        doc_name = data[b'doc_name'].decode('utf-8')
+        file_path = data[b'file_path'].decode('utf-8')
+        roles = data[b'roles'].decode('utf-8').split(',')
+        upload_time = data[b'upload_time'].decode('utf-8')
         
         # Extract text and process the document
         text = extract_text_from_pdf(file_path)
@@ -21,7 +22,7 @@ def process_upload(entry_id, data):
         embeddings = get_embeddings(chunks)
         
         # Store metadata and chunks
-        store_file_metadata(doc_name, data['original_filename'], upload_time, roles, summary, summary_embeddings)
+        store_file_metadata(doc_name, data[b'original_filename'].decode('utf-8'), upload_time, roles, summary, summary_embeddings)
         store_chunks_in_vectorDB(doc_name, chunks, embeddings, roles)
 
         # Remove the file after processing

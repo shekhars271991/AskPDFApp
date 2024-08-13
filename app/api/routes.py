@@ -4,7 +4,6 @@ from app.services.embedding_service import store_chunks_in_vectorDB, get_embeddi
 from app.services.classification_service import classify_task_type
 from app.services.llama_service import ask_llama
 from app.services.redis_service import get_keys, delete_doc
-from app.services.file_description_service import summarize_llama
 from app.services.sematic_cache_service import insert_in_semantic_cache, check_sematic_cache, get_data_from_cache
 import os
 from datetime import datetime

@@ -2,7 +2,7 @@ import redis
 import os
 from app.services.document_service import store_file_metadata, extract_text_from_pdf, chunk_text, get_embeddings
 from app.services.embedding_service import store_chunks_in_vectorDB
-from app.services.file_description_service import summarize_llama
+from app.services.llama_service import summarize_llama
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 

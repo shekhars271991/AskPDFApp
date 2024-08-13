@@ -33,7 +33,7 @@ def ask_question():
         related_queries = check_sematic_cache(query,roles)
         if(related_queries):
             resp = get_data_from_cache(related_queries[0])
-            return jsonify({'answer': resp['response'], 'relatedQuery': resp['query']})
+            return jsonify({'answer': resp['response'], 'relatedQuery': resp['query'], 'relatedDocs':resp['related_docs'], 'fromCache': "true"})
     
     # Retrieve related documents based on the query
     related_docs = get_docs_related_to_query(query, roles)
@@ -48,12 +48,6 @@ def ask_question():
         access_level = list(access_level)
     else:
         access_level = []
-
-# # Check if related_docs is None or empty
-# if not related_docs:
-#     return jsonify({'answer': "No related documents found.", 'relatedDocs': []})
-
-    # Check if related_docs is None or empty
     if not related_docs:
         return jsonify({'answer': "No related documents found.", 'relatedDocs': []})
 
@@ -64,7 +58,7 @@ def ask_question():
     answer = ask_llama(context, query)
 
     # insert in semantic cache
-    insert_in_semantic_cache(query, answer, access_level)
+    insert_in_semantic_cache(query, answer, access_level, related_docs)
 
     return jsonify({'answer': answer, 'relatedDocs': related_docs})
 

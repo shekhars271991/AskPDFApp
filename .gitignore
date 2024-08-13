@@ -17,5 +17,5 @@ new_venv/
 *.log
 *.tmp
 
-uploadedFiles/
+uploadedFiles/*
 steramlitapp/streamlitappenv

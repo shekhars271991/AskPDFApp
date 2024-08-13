@@ -124,20 +124,15 @@ def get_user_docs(roles):
         if i > 0:
             role_filter += " | "
         role_filter += f"@roles:{{{role}}}"  
-        
-#   FT.SEARCH idx '@colors:{orange}'
 
     q = Query(f'{role_filter}')\
                 .dialect(4)
-
     results = redis_client.ft(SUMMARY_INDEX_NAME).search(q)
-    # related_docs = [{'id': doc.id, 'roles': doc.roles} for doc in results.docs if float(doc.vector_score) <= 0.8]
-
-    # related_docs = [doc.id for doc in results.docs if float(doc.vector_score) <= 0.8]
     related_docs = []
     for doc in results.docs:
         doc_data = json.loads(doc.json)[0]
-        related_docs.append({'id': doc.id, 'doc_name': doc_data["original_filename"], 'roles': doc_data["roles"], 'summary': doc_data["summary"]})
+        related_docs.append({'id': doc.id, 'doc_name': doc_data["original_filename"], 'roles': doc_data["roles"], 'summary': doc_data["summary"],\
+                              'uniqueFileName':doc_data["unique_filename"]})
 
     return related_docs
 

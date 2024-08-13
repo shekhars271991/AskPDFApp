@@ -56,18 +56,6 @@ def store_file_metadata(doc_name, original_filename, upload_time, roles, summary
 
 def list_uploaded_documents(roles):
     userdocs = get_user_docs(roles)
-    # document_keys = get_keys('file_*')
-    # documents = []
-    # for key in document_keys:
-    #     if key.decode('utf-8').endswith('_metadata'):
-    #         doc_name = key.decode('utf-8').split('_metadata')[0].split('file_')[1]
-    #         metadata = get_json(key)
-    #         documents.append({
-    #             "doc_name": doc_name,
-    #             "uploaded_time":metadata['uploaded_time'],
-    #             "orignal_filename":metadata['original_filename'],
-    #             "summary":metadata['summary']
-    #         })
     return userdocs
 
 def get_docs_related_to_query(query, roles):

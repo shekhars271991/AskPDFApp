@@ -36,7 +36,7 @@ def ask_question():
         related_queries = check_sematic_cache(query,roles)
         if(related_queries):
             resp = get_data_from_cache(related_queries[0])
-            return jsonify({'answer': resp['response'], 'relatedQuery': resp['query'], 'relatedDocs':resp['related_docs'], 'fromCache': "true"})
+            return jsonify({'answer': resp['response'], 'relatedQuery': resp['query'], 'relatedDocs':resp['related_docs'], 'fromCache': "true", 'relatedWebpages':resp['related_webpages']})
     # doc_ids = []
     # Retrieve related documents based on the query
     if 'files' in doc_types:
@@ -48,7 +48,8 @@ def ask_question():
         # doc_ids.extend([doc_id for doc_id, _ in related_webpages])
 
     
-
+    context_doc = ""
+    context_web = ""
     doc_ids = [doc_id for doc_id, _ in related_docs]
     webpage_ids = [webpage_id for webpage_id, _ in related_webpages]
     # Initialize access_level with the roles of the first document
@@ -60,17 +61,19 @@ def ask_question():
         access_level = list(access_level)
     else:
         access_level = []
-    if not related_docs:
+    if not related_docs and not related_webpages:
         return jsonify({'answer': "No related documents found.", 'relatedDocs': []})
-
-    context_doc = get_context_from_similar_entries(query, doc_ids)
-    context_pdf = get_web_context_from_similar_entries(query, webpage_ids)
-    answer = ask_llama(context_doc.join(context_pdf), query)
-
+    if related_docs:
+        context_doc = get_context_from_similar_entries(query, doc_ids)
+    if related_webpages:
+        context_web = get_web_context_from_similar_entries(query, webpage_ids)
+    context = context_doc + "\n\n"+ context_web
+    answer = ask_llama(context, query)
+    access_level.append(username)
     # insert in semantic cache
-    insert_in_semantic_cache(query, answer, access_level, related_docs)
+    insert_in_semantic_cache(query, answer, access_level, related_docs, related_webpages)
 
-    return jsonify({'answer': answer, 'relatedDocs': related_docs})
+    return jsonify({'answer': answer, 'relatedDocs': related_docs, 'relatedWebpages': related_webpages})
 
 @api_bp.route('/upload', methods=['POST'])
 @jwt_required()
@@ -157,6 +160,29 @@ def delete_document():
     except Exception as e:
         return jsonify({'error': f'Failed to delete document: {str(e)}'}), 500
 
+# @api_bp.route('/index_webpage', methods=['POST'])
+# @jwt_required()
+# def fetch_html():
+#     jwt_identity = get_jwt_identity()
+#     data = request.get_json()
+#     url = data.get('url')
+#     caller_roles = jwt_identity.get('roles', []) #check if he is admin
+
+#     if not url:
+#         return jsonify({'error': 'Missing URL in request body'}), 400
+#     text = extract_text_from_url(url)
+#     webpagesummary = summarize_llama(text)
+#     web_summary_embeddings = get_embeddings(webpagesummary).tolist()
+#     title = get_webpage_title(text)
+#     chunks = chunk_text(text)
+#     embeddings = get_embeddings(chunks)
+#     unique_title = get_unique_webpagename(title)
+#     store_webpage_metadata(title, unique_title, caller_roles, webpagesummary, web_summary_embeddings)
+#     store_web_chunks_in_vectorDB(unique_title, chunks, embeddings,url, caller_roles)
+
+#     return jsonify({'title': title, 'response': "uploaded successfully"}), 200
+
+
 @api_bp.route('/index_webpage', methods=['POST'])
 @jwt_required()
 def fetch_html():
@@ -167,14 +193,14 @@ def fetch_html():
 
     if not url:
         return jsonify({'error': 'Missing URL in request body'}), 400
-    text = extract_text_from_url(url)
-    webpagesummary = summarize_llama(text)
-    web_summary_embeddings = get_embeddings(webpagesummary).tolist()
-    title = get_webpage_title(text)
-    chunks = chunk_text(text)
-    embeddings = get_embeddings(chunks)
-    unique_title = get_unique_webpagename(title)
-    store_webpage_metadata(title, unique_title, caller_roles, webpagesummary, web_summary_embeddings)
-    store_web_chunks_in_vectorDB(unique_title, chunks, embeddings,url, caller_roles)
+    try:
+        task_data = {
+            'url': url,
+            'roles': ','.join(caller_roles)
+        }
+        add_to_stream('webpage_indexing_stream', task_data)
+        return jsonify({'message': 'Webpage enqueued for processing'}), 200
 
-    return jsonify({'title': title, 'response': "uploaded successfully"}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to enqueue webpage: {str(e)}'}), 500
+

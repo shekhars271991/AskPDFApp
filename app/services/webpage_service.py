@@ -63,7 +63,7 @@ def get_ids_and_roles(doc_details):
     return doc_id_and_role
 
 
-def get_web_context_from_similar_entries(query, related_docs):
+def get_web_context_from_similar_entries(query, related_webpage_titles):
     query_embedding = get_embeddings(query)
-    context = perform_vector_search_for_web_chunks(query_embedding, related_docs)
+    context = perform_vector_search_for_web_chunks(query_embedding, related_webpage_titles)
     return context

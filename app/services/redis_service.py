@@ -252,7 +252,6 @@ def perform_vector_search_for_webpages(query_embedding, roles):
 
 
     params = {"query_vec": vector}
-
     results = redis_client.ft(WEBPAGE_SUMMARY_INDEX_NAME).search(q, query_params=params)
     related_webpages = []
     for doc in results.docs:
@@ -264,27 +263,62 @@ def perform_vector_search_for_webpages(query_embedding, roles):
 
 
 
-def perform_vector_search_for_web_chunks(query_embedding, related_docs):
+def perform_vector_search_for_web_chunks(query_embedding, related_webpage_titles):
     # Convert query embedding to a binary format for Redis
     vector = np.array(query_embedding, dtype=np.float32).tobytes()   
-    doc_name_filter = ""
-    for i, doc in enumerate(related_docs):
+    web_title_filter = ""
+    for i, doc in enumerate(related_webpage_titles):
         if i > 0:
-            doc_name_filter += " | "
-        doc_name_filter += f"@webpage_title:{doc}"    
+            web_title_filter += " | "
+        web_title_filter += f"@webpage_title:{doc}"    
     
 
-    q = Query(f'({doc_name_filter})=>[KNN 3 @vector $query_vec AS vector_score]')\
+    q = Query(f'({web_title_filter})=>[KNN 3 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
                 .return_fields('vector_score', 'chunk')\
                 .dialect(3)
 
-    # Set the parameters for the query, including the vector for similarity search
     params = {"query_vec": vector}
-    # Execute the search query on Redis
     results = redis_client.ft(WEB_CHUNK_INDEX_NAME).search(q, query_params=params)
-    # Extract the chunks of text from the search results
     matching_chunks = [doc.chunk for doc in results.docs]
-    # Join the matching chunks to form the context
     context = "\n\n".join(matching_chunks)
     return context
+
+def create_vector_index_web_chunk():
+    schema = [
+        TextField("$.chunk", as_name='chunk'),
+        TextField("$.roles", as_name='roles'),
+        TextField("$.webpage_title", as_name='webpage_title'),
+        VectorField('$.embedding', "HNSW", {
+            "TYPE": 'FLOAT32',
+            "DIM": 384,
+            "DISTANCE_METRIC": "COSINE"
+        }, as_name='vector')
+    ]
+
+    idx_def = IndexDefinition(index_type=IndexType.JSON, prefix=['webchunk_'])
+
+    try:
+        redis_client.ft(WEB_CHUNK_INDEX_NAME).dropindex()
+    except:
+        pass
+    redis_client.ft(WEB_CHUNK_INDEX_NAME).create_index(schema, definition=idx_def)
+
+
+def create_vector_index_web_summary():
+    schema = [
+        TagField("$.roles", as_name='roles'),
+        VectorField('$.summary_embeddings', "HNSW", {
+            "TYPE": 'FLOAT32',
+            "DIM": 384,
+            "DISTANCE_METRIC": "COSINE"
+        }, as_name='vector')
+    ]
+
+    idx_def = IndexDefinition(index_type=IndexType.JSON, prefix=['webpage_'])
+
+    try:
+        redis_client.ft(WEBPAGE_SUMMARY_INDEX_NAME).dropindex()
+    except:
+        pass
+    redis_client.ft(WEBPAGE_SUMMARY_INDEX_NAME).create_index(schema, definition=idx_def)

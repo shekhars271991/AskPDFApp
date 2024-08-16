@@ -25,7 +25,7 @@ def generate_id_from_query(query):
     return unique_id
 
 
-def insert_in_semantic_cache(query, response, access_level, related_docs):
+def insert_in_semantic_cache(query, response, access_level, related_docs, related_webpages):
     query_embedding = get_embeddings(query)
     unique_id = generate_id_from_query(query)
     
@@ -36,7 +36,8 @@ def insert_in_semantic_cache(query, response, access_level, related_docs):
         "response": response,
         "createdAt": datetime.now().isoformat(),
         "roles": access_level,
-        "related_docs": related_docs
+        "related_docs": related_docs,
+        "related_webpages": related_webpages
     }
     set_json(cache_key, '.', cache_value)
 

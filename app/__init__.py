@@ -2,13 +2,15 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from config import DevConfig, ProdConfig  # Import configurations
-from .services.redis_service import create_vector_index_chunk, create_vector_index_summary, create_vector_index_cache
+from .services.redis_service import create_vector_index_chunk, create_vector_index_summary, \
+    create_vector_index_cache, create_vector_index_web_chunk, create_vector_index_web_summary
 from dotenv import load_dotenv
 from app.api.routes import api_bp
 from app.auth import auth_bp
 import os
 import threading  # Import threading module
-from app.services.process_document_consumer import consume_stream  
+from app.services.process_document_consumer import consume_stream_doc
+from app.services.process_webpages_consumer import consume_stream_web
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,9 +31,15 @@ def create_app(config_class='config.DevConfig'):
     create_vector_index_chunk()
     create_vector_index_summary()
     create_vector_index_cache()
+    create_vector_index_web_summary()
+    create_vector_index_web_chunk()
 
-    # Start Redis consumer in a separate thread
-    consumer_thread = threading.Thread(target=consume_stream, daemon=True)
-    consumer_thread.start()
+    # Start doc Redis consumer in a separate thread
+    doc_consumer_thread = threading.Thread(target=consume_stream_doc, daemon=True)
+    doc_consumer_thread.start()
+
+    web_consumer_thread = threading.Thread(target=consume_stream_web, daemon=True)
+    web_consumer_thread.start()
+
 
     return app

@@ -10,7 +10,8 @@ from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.redis_service import add_to_stream
 from app.services.webpage_service import extract_text_from_url, store_webpage_metadata
-from app.services.webpage_service import get_webpage_title, extract_text_from_url, get_unique_webpagename
+from app.services.webpage_service import get_webpage_title, extract_text_from_url,\
+      get_unique_webpagename, get_webpages_related_to_query, get_web_context_from_similar_entries
 
 api_bp = Blueprint('api', __name__)
 UPLOAD_DIRECTORY = 'app/uploadedFiles'
@@ -21,6 +22,9 @@ UPLOAD_DIRECTORY = 'app/uploadedFiles'
 def ask_question():
     data = request.get_json()
     query = data.get('query')
+    doc_types = data.get('doc_types')
+    if not doc_types:
+        doc_types = ['files']
     jwt_identity = get_jwt_identity()
     username = jwt_identity.get('username')
     roles = jwt_identity.get('roles', []) + [username]
@@ -33,11 +37,20 @@ def ask_question():
         if(related_queries):
             resp = get_data_from_cache(related_queries[0])
             return jsonify({'answer': resp['response'], 'relatedQuery': resp['query'], 'relatedDocs':resp['related_docs'], 'fromCache': "true"})
-    
+    # doc_ids = []
     # Retrieve related documents based on the query
-    related_docs = get_docs_related_to_query(query, roles)
+    if 'files' in doc_types:
+        related_docs = get_docs_related_to_query(query, roles)
+        # doc_ids.extend([doc_id for doc_id, _ in related_docs])
+
+    if 'webpages' in doc_types:
+        related_webpages = get_webpages_related_to_query(query, roles)
+        # doc_ids.extend([doc_id for doc_id, _ in related_webpages])
+
+    
 
     doc_ids = [doc_id for doc_id, _ in related_docs]
+    webpage_ids = [webpage_id for webpage_id, _ in related_webpages]
     # Initialize access_level with the roles of the first document
     if related_docs:
         access_level = set(related_docs[0][1])
@@ -50,11 +63,9 @@ def ask_question():
     if not related_docs:
         return jsonify({'answer': "No related documents found.", 'relatedDocs': []})
 
-    context = get_context_from_similar_entries(query, doc_ids)
-    test_db_perf = request.args.get('test_db_perf', default='no')
-    if test_db_perf == 'yes':
-        return jsonify({'answer': "skiping llm call", 'context': context})
-    answer = ask_llama(context, query)
+    context_doc = get_context_from_similar_entries(query, doc_ids)
+    context_pdf = get_web_context_from_similar_entries(query, webpage_ids)
+    answer = ask_llama(context_doc.join(context_pdf), query)
 
     # insert in semantic cache
     insert_in_semantic_cache(query, answer, access_level, related_docs)

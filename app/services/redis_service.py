@@ -22,6 +22,8 @@ redis_client = redis.Redis(
 CHUNK_INDEX_NAME = "idxpdf"
 SUMMARY_INDEX_NAME = "idxsumm"
 CACHE_INDEX_NAME = "idxcache"
+WEBPAGE_SUMMARY_INDEX_NAME = "wsummidx"
+WEB_CHUNK_INDEX_NAME = "idxweb"
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def create_vector_index_chunk():
@@ -234,4 +236,55 @@ def store_web_chunks_in_vectorDB(webpagetitle, chunks, embeddings, url, roles):
             "url": url
         }
         set_json(key, '.', value)
-   
+
+def perform_vector_search_for_webpages(query_embedding, roles):
+    vector = np.array(query_embedding, dtype=np.float32).tobytes()
+    role_filter = ""
+    for i, role in enumerate(roles):
+        if i > 0:
+            role_filter += " | "
+        role_filter += f"@roles:{{{role}}}"  
+        # role_filter = "*"
+    q = Query(f'({role_filter})=>[KNN 5 @vector $query_vec AS vector_score]')\
+                .sort_by('vector_score')\
+                .return_fields('vector_score','roles')\
+                .dialect(4)
+
+
+    params = {"query_vec": vector}
+
+    results = redis_client.ft(WEBPAGE_SUMMARY_INDEX_NAME).search(q, query_params=params)
+    related_webpages = []
+    for doc in results.docs:
+        if float(doc.vector_score) <= 0.8:
+            roles = json.loads(doc.roles)
+            related_webpages.append({'id': doc.id, 'roles': roles[0]})
+
+    return related_webpages
+
+
+
+def perform_vector_search_for_web_chunks(query_embedding, related_docs):
+    # Convert query embedding to a binary format for Redis
+    vector = np.array(query_embedding, dtype=np.float32).tobytes()   
+    doc_name_filter = ""
+    for i, doc in enumerate(related_docs):
+        if i > 0:
+            doc_name_filter += " | "
+        doc_name_filter += f"@webpage_title:{doc}"    
+    
+
+    q = Query(f'({doc_name_filter})=>[KNN 3 @vector $query_vec AS vector_score]')\
+                .sort_by('vector_score')\
+                .return_fields('vector_score', 'chunk')\
+                .dialect(3)
+
+    # Set the parameters for the query, including the vector for similarity search
+    params = {"query_vec": vector}
+    # Execute the search query on Redis
+    results = redis_client.ft(WEB_CHUNK_INDEX_NAME).search(q, query_params=params)
+    # Extract the chunks of text from the search results
+    matching_chunks = [doc.chunk for doc in results.docs]
+    # Join the matching chunks to form the context
+    context = "\n\n".join(matching_chunks)
+    return context

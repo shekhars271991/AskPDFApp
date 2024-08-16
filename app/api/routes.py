@@ -1,16 +1,16 @@
 from flask import Blueprint, request, jsonify
 from app.services.document_service import store_file_metadata, extract_text_from_pdf,list_uploaded_documents, chunk_text, get_unique_filename,get_context_from_similar_entries, get_docs_related_to_query
-from app.services.embedding_service import store_chunks_in_vectorDB, get_embeddings
+from app.services.embedding_service import get_embeddings
 from app.services.classification_service import classify_task_type
-from app.services.llama_service import ask_llama
-from app.services.redis_service import get_keys, delete_doc
+from app.services.llama_service import ask_llama, summarize_llama
+from app.services.redis_service import get_keys, delete_doc, store_web_chunks_in_vectorDB, set_json
 from app.services.sematic_cache_service import insert_in_semantic_cache, check_sematic_cache, get_data_from_cache
 import os
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.redis_service import add_to_stream
-
-
+from app.services.webpage_service import extract_text_from_url, store_webpage_metadata
+from app.services.webpage_service import get_webpage_title, extract_text_from_url, get_unique_webpagename
 
 api_bp = Blueprint('api', __name__)
 UPLOAD_DIRECTORY = 'app/uploadedFiles'
@@ -145,3 +145,25 @@ def delete_document():
 
     except Exception as e:
         return jsonify({'error': f'Failed to delete document: {str(e)}'}), 500
+
+@api_bp.route('/index_webpage', methods=['POST'])
+@jwt_required()
+def fetch_html():
+    jwt_identity = get_jwt_identity()
+    data = request.get_json()
+    url = data.get('url')
+    caller_roles = jwt_identity.get('roles', []) #check if he is admin
+
+    if not url:
+        return jsonify({'error': 'Missing URL in request body'}), 400
+    text = extract_text_from_url(url)
+    webpagesummary = summarize_llama(text)
+    web_summary_embeddings = get_embeddings(webpagesummary).tolist()
+    title = get_webpage_title(text)
+    chunks = chunk_text(text)
+    embeddings = get_embeddings(chunks)
+    unique_title = get_unique_webpagename(title)
+    store_webpage_metadata(title, unique_title, caller_roles, webpagesummary, web_summary_embeddings)
+    store_web_chunks_in_vectorDB(unique_title, chunks, embeddings,url, caller_roles)
+
+    return jsonify({'title': title, 'response': "uploaded successfully"}), 200

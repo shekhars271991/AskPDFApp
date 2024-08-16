@@ -1,8 +1,8 @@
 import redis
 import os
 from app.services.document_service import store_file_metadata, extract_text_from_pdf, chunk_text, get_embeddings
-from app.services.embedding_service import store_chunks_in_vectorDB
 from app.services.llama_service import summarize_llama
+from app.services.redis_service import store_doc_chunks_in_vectorDB
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
@@ -23,7 +23,7 @@ def process_upload(entry_id, data):
         
         # Store metadata and chunks
         store_file_metadata(doc_name, data[b'original_filename'].decode('utf-8'), upload_time, roles, summary, summary_embeddings)
-        store_chunks_in_vectorDB(doc_name, chunks, embeddings, roles)
+        store_doc_chunks_in_vectorDB(doc_name, chunks, embeddings, roles)
 
         # Remove the file after processing
         os.remove(file_path)

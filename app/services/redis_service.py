@@ -210,3 +210,28 @@ def add_to_stream(stream_name, data):
     r = redis.StrictRedis(host='localhost', port=6379, db=0)
     r.xadd(stream_name, data)
  
+
+
+def store_doc_chunks_in_vectorDB(doc_name, chunks, embeddings, roles):
+    for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+        key = f"chunk_{doc_name}_{i}"
+        value = {
+            "chunk": chunk,
+            "doc_name":doc_name,
+            "embedding": embedding.tolist(),
+            "roles": roles
+        }
+        set_json(key, '.', value)
+
+def store_web_chunks_in_vectorDB(webpagetitle, chunks, embeddings, url, roles):
+    for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+        key = f"webchunk_{webpagetitle}_{i}"
+        value = {
+            "chunk": chunk,
+            "webpage_title":webpagetitle,
+            "embedding": embedding.tolist(),
+            "roles": roles,
+            "url": url
+        }
+        set_json(key, '.', value)
+   

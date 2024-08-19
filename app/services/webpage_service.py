@@ -51,10 +51,11 @@ def get_ids_and_roles(doc_details):
     for doc in doc_details:
         doc_id = doc['id']
         roles = doc['roles']
+        webpage_title = doc['webpage_title']
         # Remove the leading 'webpage_' and trailing '_metadata'
         if doc_id.startswith('webpage_') and doc_id.endswith('_metadata'):
             cleaned_doc_id = doc_id[len('webpage_'):-len('_metadata')]
-            doc_id_and_role.append((cleaned_doc_id, roles))
+            doc_id_and_role.append((cleaned_doc_id, roles, webpage_title))
     return doc_id_and_role
 
 

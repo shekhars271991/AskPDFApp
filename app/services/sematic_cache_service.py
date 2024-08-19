@@ -38,6 +38,8 @@ def insert_in_semantic_cache(query, response, access_level, related_docs, relate
         "roles": access_level,
         "related_docs": related_docs,
         "related_webpages": related_webpages
+
+
     }
     set_json(cache_key, '.', cache_value)
 

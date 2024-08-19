@@ -58,8 +58,9 @@ def get_ids_and_roles(doc_details):
     for doc in doc_details:
         doc_id = doc['id']
         roles = doc['roles']
+        original_filename = doc['original_filename']
         # Remove the leading 'file_' and trailing '_metadata'
         if doc_id.startswith('file_') and doc_id.endswith('_metadata'):
             cleaned_doc_id = doc_id[len('file_'):-len('_metadata')]
-            doc_id_and_role.append((cleaned_doc_id, roles))
+            doc_id_and_role.append((cleaned_doc_id, roles, original_filename))
     return doc_id_and_role

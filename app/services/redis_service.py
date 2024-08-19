@@ -30,7 +30,6 @@ def create_vector_index_chunk():
     schema = [
         TextField("$.chunk", as_name='chunk'),
         TextField("$.roles", as_name='roles'),
-        TextField("$.doc_name", as_name='doc_name'),
         VectorField('$.embedding', "HNSW", {
             "TYPE": 'FLOAT32',
             "DIM": 384,
@@ -75,6 +74,7 @@ def perform_vector_search_for_chunks(query_embedding, related_docs):
 def create_vector_index_summary():
     schema = [
         TagField("$.roles", as_name='roles'),
+        TagField("$.original_filename", as_name='original_filename'),
         VectorField('$.summary_embeddings', "HNSW", {
             "TYPE": 'FLOAT32',
             "DIM": 384,
@@ -101,7 +101,7 @@ def perform_vector_search_for_documents(query_embedding, roles):
         # role_filter = "*"
     q = Query(f'({role_filter})=>[KNN 5 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
-                .return_fields('vector_score','roles')\
+                .return_fields('vector_score','roles', 'original_filename')\
                 .dialect(4)
 
 
@@ -115,7 +115,12 @@ def perform_vector_search_for_documents(query_embedding, roles):
     for doc in results.docs:
         if float(doc.vector_score) <= 0.8:
             roles = json.loads(doc.roles)
-            related_docs.append({'id': doc.id, 'roles': roles[0]})
+            original_filename = json.loads(doc.original_filename)[0]
+            related_docs.append({
+            'id': doc.id, 
+            'roles': roles[0],
+            'original_filename': original_filename
+        })
 
     return related_docs
 
@@ -247,18 +252,23 @@ def perform_vector_search_for_webpages(query_embedding, roles):
         # role_filter = "*"
     q = Query(f'({role_filter})=>[KNN 5 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
-                .return_fields('vector_score','roles')\
+                .return_fields('vector_score','roles', 'webpage_title')\
                 .dialect(4)
 
 
     params = {"query_vec": vector}
     results = redis_client.ft(WEBPAGE_SUMMARY_INDEX_NAME).search(q, query_params=params)
+
     related_webpages = []
     for doc in results.docs:
         if float(doc.vector_score) <= 0.8:
             roles = json.loads(doc.roles)
-            related_webpages.append({'id': doc.id, 'roles': roles[0]})
-
+            webpage_title = json.loads(doc.webpage_title)[0]
+            related_webpages.append({
+            'id': doc.id, 
+            'roles': roles[0],
+            'webpage_title': webpage_title
+        })
     return related_webpages
 
 
@@ -288,7 +298,6 @@ def create_vector_index_web_chunk():
     schema = [
         TextField("$.chunk", as_name='chunk'),
         TextField("$.roles", as_name='roles'),
-        TextField("$.webpage_title", as_name='webpage_title'),
         VectorField('$.embedding', "HNSW", {
             "TYPE": 'FLOAT32',
             "DIM": 384,
@@ -325,6 +334,7 @@ def get_user_webpages(roles):
 def create_vector_index_web_summary():
     schema = [
         TagField("$.roles", as_name='roles'),
+        TagField("$.webpage_title", as_name='webpage_title'),
         VectorField('$.summary_embeddings', "HNSW", {
             "TYPE": 'FLOAT32',
             "DIM": 384,

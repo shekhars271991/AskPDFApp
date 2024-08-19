@@ -15,7 +15,6 @@ api_bp = Blueprint('api', __name__)
 UPLOAD_DIRECTORY = 'app/uploadedFiles'
 MAX_URLS = 50
 
-
 @api_bp.route('/ask', methods=['POST'])
 @jwt_required()
 def ask_question():
@@ -32,28 +31,28 @@ def ask_question():
     skip_cache = request.args.get('skip_cache', default='yes')
     # check in the semantic cache
     if(skip_cache == 'no'):
-        related_queries = check_sematic_cache(query,roles)
+        related_queries = check_sematic_cache(query, roles)
         if(related_queries):
             resp = get_data_from_cache(related_queries[0])
-            return jsonify({'answer': resp['response'], 'relatedQuery': resp['query'], 'relatedDocs':resp['related_docs'], 'fromCache': "true", 'relatedWebpages':resp['related_webpages']})
-    # doc_ids = []
-    # Retrieve related documents based on the query
-        related_webpages = []
-        related_webpages = []
+            return jsonify({
+                'answer': resp['response'],
+                'relatedQuery': resp['query'],
+                'relatedDocs': resp['related_docs'],
+                'relatedWebpages': resp['related_webpages'],
+                'fromCache': "true"
+            })
+
+    related_docs = []
+    related_webpages = []
+
     if 'files' in doc_types:
         related_docs = get_docs_related_to_query(query, roles)
-        # doc_ids.extend([doc_id for doc_id, _ in related_docs])
 
     if 'webpages' in doc_types:
         related_webpages = get_webpages_related_to_query(query, roles)
-        # doc_ids.extend([doc_id for doc_id, _ in related_webpages])
 
-    
     context_doc = ""
     context_web = ""
-    doc_ids = [doc_id for doc_id, _ in related_docs]
-    webpage_ids = [webpage_id for webpage_id, _ in related_webpages]
-    # Initialize access_level with the roles of the first document
     if related_docs:
         access_level = set(related_docs[0][1])
         # Intersect with roles of all other documents
@@ -62,19 +61,48 @@ def ask_question():
         access_level = list(access_level)
     else:
         access_level = []
+        
     if not related_docs and not related_webpages:
-        return jsonify({'answer': "No related documents found.", 'relatedDocs': []})
+        return jsonify({'answer': "No related documents or webpages found.", 'relatedDocs': []})
+
     if related_docs:
-        context_doc = get_context_from_similar_entries(query, doc_ids)
+        context_doc = get_context_from_similar_entries(query, [doc[0] for doc in related_docs])
+    
     if related_webpages:
-        context_web = get_web_context_from_similar_entries(query, webpage_ids)
-    context = context_doc + "\n\n"+ context_web
+        context_web = get_web_context_from_similar_entries(query, [webpage[0] for webpage in related_webpages])
+    
+    context = context_doc + "\n\n" + context_web
     answer = ask_llama(context, query)
     access_level.append(username)
-    # insert in semantic cache
-    insert_in_semantic_cache(query, answer, access_level, related_docs, related_webpages)
 
-    return jsonify({'answer': answer, 'relatedDocs': related_docs, 'relatedWebpages': related_webpages})
+    # Combine related webpages and titles
+    related_webpages_combined = [
+        {
+            "id": webpage_id,
+            "roles": roles,
+            "title": webpage_title
+        }
+        for (webpage_id, roles, webpage_title) in related_webpages
+    ]
+
+    # Combine related docs and filenames
+    related_docs_combined = [
+        {
+            "id": doc_id,
+            "roles": roles,
+            "filename": doc_filename
+        }
+        for (doc_id, roles, doc_filename) in related_docs
+    ]
+
+    # insert in semantic cache
+    insert_in_semantic_cache(query, answer, access_level, related_docs_combined, related_webpages_combined)
+
+    return jsonify({
+        'answer': answer,
+        'relatedDocs': related_docs_combined,
+        'relatedWebpages': related_webpages_combined
+    })
 
 @api_bp.route('/upload', methods=['POST'])
 @jwt_required()

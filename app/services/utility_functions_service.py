@@ -11,3 +11,10 @@ def get_unique_filename(filename):
     filename, file_extension = os.path.splitext(original_filename)
     unique_filename = f"{filename_prefix}_{str(uuid.uuid4())[:8]}{file_extension}"
     return unique_filename
+
+
+def get_unique_webpagename(title):
+    original_title= title
+    filename_prefix = original_title[:3] if len(original_title) >= 3 else original_title
+    unique_title= f"{filename_prefix}_{str(uuid.uuid4())[:8]}"
+    return unique_title

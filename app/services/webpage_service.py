@@ -1,11 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 from app.services.summerization_model_service import summarize_text
-import os
-import uuid
-from app.services.redis_service import set_json
+from app.services.redis_service import set_json, get_user_webpages
 from app.services.embedding_service import get_embeddings
 from app.services.redis_service import perform_vector_search_for_webpages, perform_vector_search_for_web_chunks
+from app.services.URL_crawler_service import get_urls_from_page
+from urllib.parse import urlparse
 
 MAX_TITLE_LENGTH=5 # TOKENS
 MIN_TITLE_LENGTH=5
@@ -27,11 +27,6 @@ def get_webpage_title(text):
     title = summarize_text(text)
     return title
 
-def get_unique_webpagename(title):
-    original_title= title
-    filename_prefix = original_title[:3] if len(original_title) >= 3 else original_title
-    unique_title= f"{filename_prefix}_{str(uuid.uuid4())[:8]}"
-    return unique_title
 
 def store_webpage_metadata(webpage_title, unique_name, roles, summary, summary_embeddings):
     metadata_key = f"webpage_{unique_name}_metadata"
@@ -67,3 +62,24 @@ def get_web_context_from_similar_entries(query, related_webpage_titles):
     query_embedding = get_embeddings(query)
     context = perform_vector_search_for_web_chunks(query_embedding, related_webpage_titles)
     return context
+
+
+def get_urls(url, alloweddomains, level, max_urls):
+    reachable_urls, unreachable_urls = get_urls_from_page(url, level, max_urls, alloweddomains)
+    return reachable_urls, unreachable_urls
+
+
+def get_allowed_domains(allowed_domains, url):
+    if not allowed_domains:
+        parsed_url = urlparse(url)
+        main_domain = parsed_url.netloc
+        if not main_domain:
+            return "error"
+        allowed_domains = [main_domain]
+        return allowed_domains
+    else:
+        return allowed_domains
+
+def list_indexed_webpages(roles):
+    userwebpages = get_user_webpages(roles)
+    return userwebpages

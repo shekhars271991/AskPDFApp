@@ -1,6 +1,6 @@
 import redis
 import os
-from app.services.document_service import store_file_metadata, extract_text_from_pdf, get_embeddings
+from app.services.document_service import store_file_metadata, extract_text_from_pdf
 from app.services.llama_service import summarize_llama
 from app.services.redis_service import store_doc_chunks_in_vectorDB
 from app.services.utility_functions_service import chunk_text

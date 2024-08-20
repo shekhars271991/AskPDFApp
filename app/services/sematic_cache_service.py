@@ -1,5 +1,5 @@
 from app.services.embedding_service import get_embeddings
-from app.services.redis_service import perform_vector_search_for_cache, set_json, get_json
+from app.services.DB.redis_service import perform_vector_search_for_cache, set_json, get_json
 import hashlib
 from datetime import datetime
 import uuid
@@ -26,6 +26,9 @@ def generate_id_from_query(query):
 
 
 def insert_in_semantic_cache(query, response, access_level, related_docs, related_webpages):
+    if response == "I don't know." or response == "I don't know":
+        return
+        
     query_embedding = get_embeddings(query)
     unique_id = generate_id_from_query(query)
     

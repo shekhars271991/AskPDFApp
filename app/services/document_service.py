@@ -1,6 +1,6 @@
 
 from datetime import datetime
-from app.services.redis_service import (set_json, 
+from app.services.DB.redis_service import (set_json, 
                                         get_keys, 
                                         get_json, 
                                         perform_vector_search_for_chunks, 

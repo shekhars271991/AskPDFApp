@@ -1,19 +1,19 @@
 from flask import Blueprint, request, jsonify
 from app.services.document_service import list_uploaded_documents,get_context_from_similar_entries, get_docs_related_to_query
 from app.services.llama_service import ask_llama
-from app.services.redis_service import get_keys, delete_doc
+from app.services.DB.redis_service import get_keys, delete_doc
 from app.services.sematic_cache_service import insert_in_semantic_cache, check_sematic_cache, get_data_from_cache
 import os
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.services.redis_service import add_to_stream
+from app.services.DB.redis_service import add_to_stream
 from app.services.webpage_service import get_webpages_related_to_query, get_web_context_from_similar_entries, get_allowed_domains
 from app.services.utility_functions_service import get_unique_filename
 from app.services.webpage_service import get_urls, list_indexed_webpages
 
 api_bp = Blueprint('api', __name__)
 UPLOAD_DIRECTORY = 'app/uploadedFiles'
-MAX_URLS = 50
+
 
 @api_bp.route('/ask', methods=['POST'])
 @jwt_required()
@@ -65,10 +65,10 @@ def ask_question():
     if not related_docs and not related_webpages:
         return jsonify({'answer': "No related documents or webpages found.", 'relatedDocs': []})
 
-    if related_docs:
+    if  related_docs is not None:
         context_doc = get_context_from_similar_entries(query, [doc[0] for doc in related_docs])
     
-    if related_webpages:
+    if related_webpages is not None:
         context_web = get_web_context_from_similar_entries(query, [webpage[0] for webpage in related_webpages])
     
     context = context_doc + "\n\n" + context_web
@@ -216,8 +216,8 @@ def fetch_html():
     
     try:
         # Fetch reachable and unreachable URLs
-        reachable_urls, unreachable_urls = get_urls(url, allowed_domains_updated, level,MAX_URLS)
-
+        reachable_urls, unreachable_urls = get_urls(url, allowed_domains_updated, level,maxcount)
+        
         # Add only reachable URLs to the stream
         for reachable_url in reachable_urls:
             task_data = {

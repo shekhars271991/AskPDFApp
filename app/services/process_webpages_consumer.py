@@ -1,7 +1,7 @@
 import redis
 from app.services.webpage_service import extract_text_from_url, get_webpage_title, store_webpage_metadata
 from app.services.llama_service import summarize_llama
-from app.services.redis_service import store_web_chunks_in_vectorDB
+from app.services.DB.redis_service import store_web_chunks_in_vectorDB
 from app.services.embedding_service import get_embeddings
 from app.services.utility_functions_service import chunk_text, get_unique_webpagename
 

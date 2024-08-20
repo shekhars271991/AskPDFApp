@@ -2,7 +2,7 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from config import DevConfig, ProdConfig  # Import configurations
-from .services.redis_service import create_vector_index_chunk, create_vector_index_summary, \
+from app.services.DB.create_redis_index import create_vector_index_chunk, create_vector_index_summary, \
     create_vector_index_cache, create_vector_index_web_chunk, create_vector_index_web_summary
 from dotenv import load_dotenv
 from app.api.routes import api_bp

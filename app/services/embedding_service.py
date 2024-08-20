@@ -1,4 +1,4 @@
-from app.services.redis_service import set_json
+from app.services.DB.redis_service import set_json
 from sentence_transformers import SentenceTransformer
 model = SentenceTransformer('all-MiniLM-L6-v2')
 

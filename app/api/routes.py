@@ -10,6 +10,7 @@ from app.services.DB.redis_service import add_to_stream
 from app.services.webpage_service import get_webpages_related_to_query, get_web_context_from_similar_entries, get_allowed_domains
 from app.services.utility_functions_service import get_unique_filename
 from app.services.webpage_service import get_urls, list_indexed_webpages
+from app.services.redisvl.query import run_vector_query
 
 api_bp = Blueprint('api', __name__)
 UPLOAD_DIRECTORY = 'app/uploadedFiles'
@@ -244,3 +245,11 @@ def get_indexed_documents():
     roles = jwt_identity.get('roles', []) + [username]
     webpages = list_indexed_webpages(roles)
     return jsonify({'indexed_webpages': webpages})
+
+
+@api_bp.route('/askvl', methods=['POST'])
+def askvl():
+    data = request.get_json()
+    query = data.get('query')
+    response = run_vector_query(query)
+    return jsonify({'response': response}), 200

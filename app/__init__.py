@@ -11,6 +11,9 @@ import os
 import threading  # Import threading module
 from app.services.process_document_consumer import consume_stream_doc
 from app.services.process_webpages_consumer import consume_stream_web
+from app.services.redisvl.create_index import createindexes
+from app.services.redisvl.query import run_vector_query
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,11 +31,15 @@ def create_app(config_class='config.DevConfig'):
     app.register_blueprint(api_bp, url_prefix='/api')
 
     # Create vector indexes
-    create_vector_index_chunk()
-    create_vector_index_summary()
-    create_vector_index_cache()
-    create_vector_index_web_summary()
-    create_vector_index_web_chunk()
+    # create_vector_index_chunk()
+    # create_vector_index_summary()
+    # create_vector_index_cache()
+    # create_vector_index_web_summary()
+    # create_vector_index_web_chunk()
+
+
+    createindexes()
+    # run_vector_query()
 
     # Start doc Redis consumer in a separate thread
     doc_consumer_thread = threading.Thread(target=consume_stream_doc, daemon=True)

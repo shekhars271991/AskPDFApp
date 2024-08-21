@@ -1,6 +1,7 @@
 import os
 from .secrets import REDIS_HOST, REDIS_PORT, REDIS_DB, LLAMA_API_URL, LLAMA_API_KEY, REDIS_PASSWORD
 from sentence_transformers import SentenceTransformer
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'your-default-secret-key')
     REDIS_HOST = REDIS_HOST

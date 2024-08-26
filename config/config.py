@@ -10,11 +10,11 @@ class Config:
     REDIS_DB = REDIS_DB
     LLAMA_API_URL = LLAMA_API_URL
     LLAMA_API_KEY = LLAMA_API_KEY
-    CHUNK_INDEX_NAME = "idxpdf"
-    SUMMARY_INDEX_NAME = "idxsumm"
+    CHUNK_INDEX_NAME = "idxpdfchunk"
+    SUMMARY_INDEX_NAME = "idxpdfsumm"
     CACHE_INDEX_NAME = "idxcache"
-    WEBPAGE_SUMMARY_INDEX_NAME = "summidx"
-    WEB_CHUNK_INDEX_NAME = "idxweb"
+    WEBPAGE_SUMMARY_INDEX_NAME = "idxwebsumm"
+    WEB_CHUNK_INDEX_NAME = "idxwebchunk"
     MODEL= SentenceTransformer('all-MiniLM-L6-v2')
 
 class DevConfig(Config):

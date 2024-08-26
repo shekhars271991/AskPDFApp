@@ -59,7 +59,7 @@ def perform_vector_search_for_documents(query_embedding, roles):
         # role_filter = "*"
     q = Query(f'({role_filter})=>[KNN 5 @vector $query_vec AS vector_score]')\
                 .sort_by('vector_score')\
-                .return_fields('vector_score','roles', 'original_filename')\
+                .return_fields('roles', 'original_filename')\
                 .dialect(4)
 
 

@@ -3,7 +3,8 @@ from bs4 import BeautifulSoup
 from app.services.summerization_model_service import summarize_text
 from app.services.DB.redis_service import set_json, get_user_webpages
 from app.services.embedding_service import get_embeddings
-from app.services.DB.redis_service import perform_vector_search_for_webpages, perform_vector_search_for_web_chunks
+from app.services.DB.redis_service import perform_vector_search_for_web_chunks
+from app.services.redisvl.query import perform_vector_search_for_webpages
 from app.services.URL_crawler_service import get_urls_from_page
 from urllib.parse import urlparse
 

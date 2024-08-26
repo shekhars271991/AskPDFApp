@@ -3,10 +3,10 @@ from datetime import datetime
 from app.services.DB.redis_service import (set_json, 
                                         get_keys, 
                                         get_json, 
-                                        perform_vector_search_for_chunks, 
+                                        # perform_vector_search_for_chunks, 
                                         # perform_vector_search_for_documents, 
                                         get_user_docs)
-from app.services.redisvl.query import perform_vector_search_for_documents
+from app.services.redisvl.query import perform_vector_search_for_documents,perform_vector_search_for_chunks
 from app.services.embedding_service import get_embeddings
 import PyPDF2
 # from sentence_transformers import SentenceTransformer

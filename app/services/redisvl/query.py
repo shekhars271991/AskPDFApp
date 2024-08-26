@@ -1,6 +1,6 @@
 from redisvl.query import VectorQuery, RangeQuery
 from redisvl.query.filter import Tag
-from app.services.redisvl.initindex import filechunkindex, filesummaryindex, websummaryindex
+from app.services.redisvl.initindex import filechunkindex, filesummaryindex, websummaryindex, webchunkindex
 from app.services.embedding_service import get_embeddings
 import numpy as np
 import json
@@ -72,33 +72,42 @@ def perform_vector_search_for_webpages(query_embedding, roles):
     return related_webpages
 
 
+def perform_vector_search_for_chunks(query_embedding, related_docs):
+    vector = np.array(query_embedding, dtype=np.float32).tobytes()
+    t = Tag("doc_name") == related_docs
+    rangequery = RangeQuery(
+                vector=vector,
+                vector_field_name="embedding",
+                return_fields=['chunk'],
+                filter_expression=t,
+                distance_threshold=0.8
+            )
+    results = filechunkindex.query(rangequery)
+    matching_chunks = []
+    # Extract the chunks of text from the search results
+    matching_chunks = [doc['chunk'] for doc in results]
+    # Join the matching chunks to form the context
+    context = "\n\n".join(matching_chunks)
+    return context
 
-# def perform_vector_search_for_webpages(query_embedding, roles):
-#     vector = np.array(query_embedding, dtype=np.float32).tobytes()
-#     role_filter = ""
-#     for i, role in enumerate(roles):
-#         if i > 0:
-#             role_filter += " | "
-#         role_filter += f"@roles:{{{role}}}"  
-#         # role_filter = "*"
-#     q = Query(f'({role_filter})=>[KNN 5 @vector $query_vec AS vector_score]')\
-#                 .sort_by('vector_score')\
-#                 .return_fields('vector_score','roles', 'webpage_title')\
-#                 .dialect(4)
+def perform_vector_search_for_web_chunks(query_embedding, related_webpage_titles):
+    vector = np.array(query_embedding, dtype=np.float32).tobytes()
+    t = Tag("webpage_title") == related_webpage_titles
+    rangequery = RangeQuery(
+                vector=vector,
+                vector_field_name="embedding",
+                return_fields=['chunk'],
+                filter_expression=t,
+                distance_threshold=0.8
+            )
+    results = webchunkindex.query(rangequery)
+    matching_chunks = []
+    # Extract the chunks of text from the search results
+    matching_chunks = [doc['chunk'] for doc in results]
+    # Join the matching chunks to form the context
+    context = "\n\n".join(matching_chunks)
+    return context
 
 
-#     params = {"query_vec": vector}
-#     results = redis_client.ft(WEBPAGE_SUMMARY_INDEX_NAME).search(q, query_params=params)
 
-#     related_webpages = []
-#     for doc in results.docs:
-#         if float(doc.vector_score) <= 0.8:
-#             roles = json.loads(doc.roles)
-#             webpage_title = json.loads(doc.webpage_title)[0]
-#             related_webpages.append({
-#             'id': doc.id, 
-#             'roles': roles[0],
-#             'webpage_title': webpage_title
-#         })
-#     return related_webpages
 

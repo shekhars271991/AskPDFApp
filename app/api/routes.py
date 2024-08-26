@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify
 from app.services.document_service import list_uploaded_documents,get_context_from_similar_entries, get_docs_related_to_query
 from app.services.llama_service import ask_llama
 from app.services.DB.redis_service import get_keys, delete_doc
-from app.services.sematic_cache_service import insert_in_semantic_cache, check_sematic_cache, get_data_from_cache
+from app.services.sematic_cache_service import check_sematic_cache, get_data_from_cache
+from app.services.redisvl.sematiccache import insert_in_semantic_cache
 import os
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -33,13 +34,14 @@ def ask_question():
     # check in the semantic cache
     if(skip_cache == 'no'):
         related_queries = check_sematic_cache(query, roles)
-        if(related_queries):
-            resp = get_data_from_cache(related_queries[0])
+        if related_queries:
+            metadata = related_queries[0].get('metadata', {})
             return jsonify({
-                'answer': resp['response'],
-                'relatedQuery': resp['query'],
-                'relatedDocs': resp['related_docs'],
-                'relatedWebpages': resp['related_webpages'],
+                'answer': related_queries[0]['response'],  # The response text from the cache
+                'relatedQuery': related_queries[0]['prompt'],  # The original query that was matched in the cache
+                'relatedDocs': metadata.get('related_docs', []),  # The related documents, or an empty list if not present
+                'relatedWebpages': metadata.get('related_webpages', []),  # The related webpages, or an empty list if not present
+                'roles': related_queries[0]['roles'],  # The roles associated with the cached response, or an empty list if not present
                 'fromCache': "true"
             })
 
@@ -55,7 +57,7 @@ def ask_question():
     context_doc = ""
     context_web = ""
     if related_docs:
-        access_level = set(related_docs[0][1])
+        access_level = set([related_docs[0][1]])
         # Intersect with roles of all other documents
         for _, roles in related_docs[1:]:
             access_level.intersection_update(roles)

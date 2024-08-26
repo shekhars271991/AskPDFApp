@@ -1,5 +1,6 @@
 from redisvl.index import SearchIndex
 import redis
+from redisvl.extensions.llmcache import SemanticCache
 
 CHUNK_INDEX_NAME = "idxpdfchunk"
 SUMMARY_INDEX_NAME = "idxpdfsumm"
@@ -124,3 +125,10 @@ filesummaryindex = SearchIndex.from_dict(file_summary_schema)
 
 for index in [filechunkindex, filesummaryindex, webchunkindex, websummaryindex]:
     index.set_client(redis_client)
+
+llmcache = SemanticCache(
+    name="chatcache",                    
+    redis_client=redis_client,  
+    distance_threshold=0.4,
+    filterable_fields=[{"name": "roles", "type": "tag"}]          
+)

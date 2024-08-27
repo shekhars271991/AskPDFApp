@@ -23,7 +23,7 @@ def process_webpage(entry_id, data):
         unique_title = get_unique_webpagename(title)
         
         # Store metadata and chunks
-        store_webpage_metadata(title, unique_title, roles, webpage_summary, summary_embeddings)
+        store_webpage_metadata(title, unique_title, roles, webpage_summary, summary_embeddings,url)
         store_web_chunks_in_vectorDB(unique_title, chunks, embeddings, url, roles)
 
         # Acknowledge the processing of the entry

@@ -100,6 +100,7 @@ web_summary_schema = {
     "fields": [
         {"name": "roles", "type": "tag"},
         {"name": "webpage_title", "type": "tag"},
+        {"name": "url", "type": "tag"},
         {
             "name": "summary_embeddings",
             "type": "vector",

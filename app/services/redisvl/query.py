@@ -1,4 +1,4 @@
-from redisvl.query import VectorQuery, RangeQuery
+from redisvl.query import VectorQuery, RangeQuery, FilterQuery
 from redisvl.query.filter import Tag
 from app.services.redisvl.initindex import filechunkindex, filesummaryindex, websummaryindex, webchunkindex
 from app.services.embedding_service import get_embeddings
@@ -107,6 +107,37 @@ def perform_vector_search_for_web_chunks(query_embedding, related_webpage_titles
     # Join the matching chunks to form the context
     context = "\n\n".join(matching_chunks)
     return context
+
+
+
+def get_user_webpages(roles):
+    role_filter = Tag("roles") == roles
+    filter_query = FilterQuery(
+                    filter_expression=role_filter
+                    )
+    results = websummaryindex.query(filter_query)
+    user_webpages = []
+    for doc in results:
+        # doc_data = json.loads(doc.json)[0]
+        user_webpages.append({'id': doc['id'], 'unique_title':doc["unique_title"], 'webpage_title': doc["webpage_title"], 'roles': doc["roles"], 'summary': doc["summary"], 'url': doc['url'] })
+
+    return user_webpages
+
+    # role_filter = ""
+    # for i, role in enumerate(roles):
+    #     if i > 0:
+    #         role_filter += " | "
+    #     role_filter += f"@roles:{{{role}}}"  
+
+    # q = Query(f'{role_filter}')\
+    #             .dialect(4)
+    # results = redis_client.ft(WEBPAGE_SUMMARY_INDEX_NAME).search(q)
+    # user_webpages = []
+    # for doc in results.docs:
+    #     doc_data = json.loads(doc.json)[0]
+    #     user_webpages.append({'id': doc.id, 'unique_title':doc_data["unique_title"], 'webpage_title': doc_data["webpage_title"], 'roles': doc_data["roles"], 'summary': doc_data["summary"] })
+
+    # return user_webpages
 
 
 

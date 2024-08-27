@@ -1,13 +1,13 @@
 from app.services.embedding_service import get_embeddings
-from app.services.redis_service import perform_vector_search_for_cache, set_json, get_json
+from app.services.DB.redis_service import set_json, get_json
+from app.services.redisvl.sematiccache import perform_vector_search_for_cache
 import hashlib
 from datetime import datetime
 import uuid
 
 
 def check_sematic_cache(query,roles):
-    query_embedding = get_embeddings(query)
-    docs = perform_vector_search_for_cache(query_embedding,roles)
+    docs = perform_vector_search_for_cache(query,roles)
     return docs
 
 
@@ -25,7 +25,10 @@ def generate_id_from_query(query):
     return unique_id
 
 
-def insert_in_semantic_cache(query, response, access_level, related_docs):
+def insert_in_semantic_cache(query, response, access_level, related_docs, related_webpages):
+    if response == "I don't know." or response == "I don't know":
+        return
+        
     query_embedding = get_embeddings(query)
     unique_id = generate_id_from_query(query)
     
@@ -36,7 +39,10 @@ def insert_in_semantic_cache(query, response, access_level, related_docs):
         "response": response,
         "createdAt": datetime.now().isoformat(),
         "roles": access_level,
-        "related_docs": related_docs
+        "related_docs": related_docs,
+        "related_webpages": related_webpages
+
+
     }
     set_json(cache_key, '.', cache_value)
 

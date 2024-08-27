@@ -1,0 +1,20 @@
+version: '0.1.0'
+
+index:
+  name: idxpdf2
+  prefix: chunk_
+
+fields:
+    - name: chunk
+      type: text
+    - name: roles
+      type: text
+    - name: doc_name
+      type: text
+    - name: embedding
+      type: vector
+      attrs:
+        algorithm: HNSW
+        dims: 384
+        distance_metric: cosine
+        datatype: float32

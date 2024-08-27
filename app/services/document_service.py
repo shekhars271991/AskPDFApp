@@ -1,12 +1,12 @@
-import os
-import uuid
+
 from datetime import datetime
-from app.services.redis_service import (set_json, 
+from app.services.DB.redis_service import (set_json, 
                                         get_keys, 
                                         get_json, 
-                                        perform_vector_search_for_chunks, 
-                                        perform_vector_search_for_documents, 
+                                        # perform_vector_search_for_chunks, 
+                                        # perform_vector_search_for_documents, 
                                         get_user_docs)
+from app.services.redisvl.query import perform_vector_search_for_documents,perform_vector_search_for_chunks
 from app.services.embedding_service import get_embeddings
 import PyPDF2
 # from sentence_transformers import SentenceTransformer
@@ -24,17 +24,7 @@ def extract_text_from_pdf(pdf_path):
             text += page.extract_text()
         return text
 
-def chunk_text(text, chunk_size=500):
-    words = text.split()
-    chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
-    return chunks
 
-def get_unique_filename(filename):
-    original_filename = filename
-    filename_prefix = original_filename[:3] if len(original_filename) >= 3 else original_filename
-    filename, file_extension = os.path.splitext(original_filename)
-    unique_filename = f"{filename_prefix}_{str(uuid.uuid4())[:8]}{file_extension}"
-    return unique_filename
 
 
 def get_context_from_similar_entries(query, related_docs):
@@ -69,8 +59,9 @@ def get_ids_and_roles(doc_details):
     for doc in doc_details:
         doc_id = doc['id']
         roles = doc['roles']
+        original_filename = doc['original_filename']
         # Remove the leading 'file_' and trailing '_metadata'
         if doc_id.startswith('file_') and doc_id.endswith('_metadata'):
             cleaned_doc_id = doc_id[len('file_'):-len('_metadata')]
-            doc_id_and_role.append((cleaned_doc_id, roles))
+            doc_id_and_role.append((cleaned_doc_id, roles, original_filename))
     return doc_id_and_role

@@ -1,41 +1,43 @@
 import redis
-import os
-from app.services.document_service import store_file_metadata, extract_text_from_pdf
+from app.services.webpage_service import extract_text_from_url, get_webpage_title, store_webpage_metadata
 from app.services.llama_service import summarize_llama
-from app.services.DB.redis_service import store_doc_chunks_in_vectorDB
-from app.services.utility_functions_service import chunk_text
+from app.services.DB.redis_service import store_web_chunks_in_vectorDB
 from app.services.embedding_service import get_embeddings
+from app.services.utility_functions_service import chunk_text, get_unique_webpagename
+from app.services.redisvl.query import check_if_url_already_indexed
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-def process_upload(entry_id, data):
+def process_webpage(entry_id, data):
     try:
         # Decode byte strings to regular strings
-        doc_name = data[b'doc_name'].decode('utf-8')
-        file_path = data[b'file_path'].decode('utf-8')
+        url = data[b'url'].decode('utf-8')
         roles = data[b'roles'].decode('utf-8').split(',')
-        upload_time = data[b'upload_time'].decode('utf-8')
         
-        # Extract text and process the document
-        text = extract_text_from_pdf(file_path)
-        summary = summarize_llama(text)
-        summary_embeddings = get_embeddings(summary).tolist()
+        #check if the URL is already indexed
+
+        if(check_if_url_already_indexed(url)):
+            print(f"Skipped webpage as its already indexed: {url}")
+            return
+        # Extract text and process the webpage
+        text = extract_text_from_url(url)
+        webpage_summary = summarize_llama(text)
+        summary_embeddings = get_embeddings(webpage_summary).tolist()
         chunks = chunk_text(text)
         embeddings = get_embeddings(chunks)
+        title = get_webpage_title(text)
+        unique_title = get_unique_webpagename(title)
         
         # Store metadata and chunks
-        store_file_metadata(doc_name, data[b'original_filename'].decode('utf-8'), upload_time, roles, summary, summary_embeddings)
-        store_doc_chunks_in_vectorDB(doc_name, chunks, embeddings, roles)
+        store_webpage_metadata(title, unique_title, roles, webpage_summary, summary_embeddings,url)
+        store_web_chunks_in_vectorDB(unique_title, chunks, embeddings, url, roles)
 
-        # Remove the file after processing
-        os.remove(file_path)
-        
         # Acknowledge the processing of the entry
-        r.xack('document_upload_stream', 'document_upload_group', entry_id)
-        print(f"Processed document: {doc_name}")
+        r.xack('webpage_indexing_stream', 'webpage_indexing_group', entry_id)
+        print(f"Processed webpage: {title}")
         
     except Exception as e:
-        print(f"Failed to process document: {str(e)}")
+        print(f"Failed to process webpage: {str(e)}")
 
 
 def create_stream_and_group(stream_name, group_name):
@@ -54,10 +56,10 @@ def create_stream_and_group(stream_name, group_name):
             raise e
 
     
-def consume_stream_doc():
-    stream_name = 'document_upload_stream'
-    group_name = 'document_upload_group'
-    consumer_name = 'document_upload_consumer'
+def consume_stream_web():
+    stream_name = 'webpage_indexing_stream'
+    group_name = 'webpage_indexing_group'
+    consumer_name = 'webpage_indexing_consumer'
 
     # Ensure stream and group are created
     create_stream_and_group(stream_name, group_name)
@@ -68,11 +70,10 @@ def consume_stream_doc():
             for stream, messages in entries:
                 for message in messages:
                     entry_id, data = message  # Unpacking the tuple
-                    # `data` is a dictionary of field-value pairs
                     print(f"Received entry ID: {entry_id}, data: {data}")
                     
                     # Pass the data dictionary to your processing function
-                    process_upload(entry_id, data)
+                    process_webpage(entry_id, data)
                     
 if __name__ == "__main__":
-    consume_stream_doc()
+    consume_stream_web()

@@ -59,7 +59,7 @@ def ask_question():
     if related_docs:
         access_level = set([related_docs[0][1]])
         # Intersect with roles of all other documents
-        for _, roles in related_docs[1:]:
+        for _, roles, _ in related_docs[1:]:
             access_level.intersection_update(roles)
         access_level = list(access_level)
     else:

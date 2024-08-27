@@ -4,6 +4,7 @@ from app.services.llama_service import summarize_llama
 from app.services.DB.redis_service import store_web_chunks_in_vectorDB
 from app.services.embedding_service import get_embeddings
 from app.services.utility_functions_service import chunk_text, get_unique_webpagename
+from app.services.redisvl.query import check_if_url_already_indexed
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
@@ -13,6 +14,11 @@ def process_webpage(entry_id, data):
         url = data[b'url'].decode('utf-8')
         roles = data[b'roles'].decode('utf-8').split(',')
         
+        #check if the URL is already indexed
+
+        if(check_if_url_already_indexed(url)):
+            print(f"Skipped webpage as its already indexed: {url}")
+            return
         # Extract text and process the webpage
         text = extract_text_from_url(url)
         webpage_summary = summarize_llama(text)

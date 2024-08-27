@@ -123,3 +123,16 @@ def get_user_webpages(roles):
 
     return user_webpages
 
+
+
+
+def check_if_url_already_indexed(url):
+    t = Tag("url") == url
+    rangequery = FilterQuery(
+                filter_expression=t,
+            )
+    results = websummaryindex.query(rangequery)
+    if results:
+        return True
+    return False
+

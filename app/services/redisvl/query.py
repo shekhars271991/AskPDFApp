@@ -54,7 +54,7 @@ def perform_vector_search_for_webpages(query_embedding, roles):
     rangequery = RangeQuery(
                 vector=vector,
                 vector_field_name="summary_embeddings",
-                return_fields=['roles', 'webpage_title'],
+                return_fields=['roles', 'webpage_title', 'url'],
                 filter_expression=t,
                 distance_threshold=0.8
             )
@@ -66,7 +66,8 @@ def perform_vector_search_for_webpages(query_embedding, roles):
         related_webpages.append({
         'id': doc['id'], 
         'roles': roles[0],
-        'webpage_title': webpage_title
+        'webpage_title': webpage_title,
+        'url': doc['url']
         })
 
     return related_webpages

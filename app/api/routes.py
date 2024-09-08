@@ -83,9 +83,10 @@ def ask_question():
         {
             "id": webpage_id,
             "roles": roles,
-            "title": webpage_title
+            "title": webpage_title,
+            "url": url
         }
-        for (webpage_id, roles, webpage_title) in related_webpages
+        for (webpage_id, roles, webpage_title, url) in related_webpages
     ]
 
     # Combine related docs and filenames

@@ -9,7 +9,7 @@ This Flask application provides functionality for uploading PDF documents, extra
 
 1. **Python 3.7+**: Ensure you have Python 3.7 or higher installed.
 2. **Redis**: Make sure Redis is installed and running on your local machine or accessible remotely.
-3. **LLaMA Model**: You should have the LLaMA model running on port `11434`. Adjust the port and URL in the code if necessary.
+3. **LLaMA Model**: You should have the LLaMA model running on port `11434`. Adjust the port and URL in the code if necessary. You can setup LLama using ollama. Download from here https://ollama.com/download
 
 ## Installation
 
@@ -40,6 +40,17 @@ This Flask application provides functionality for uploading PDF documents, extra
     ```bash
     mkdir -p AskPDF/backend_llama/uploadedFiles
     ```
+5.  ***Setup Secrets
+    You need a secrets file [in the same path as config file which would contain following attributes
+
+    # secrets.py
+    # Localhost
+    REDIS_HOST = 'localhost'
+    REDIS_PORT = 6379
+    REDIS_DB = 0
+    REDIS_PASSWORD= ""
+    LLAMA_API_URL = 'http://localhost:11434/api/generate'
+    LLAMA_API_KEY = 'not needed'
 
 ## Configuration
 

@@ -39,3 +39,5 @@ transformers==4.44.0
 typing_extensions==4.12.2
 urllib3==2.2.2
 Werkzeug==3.0.3
+redisvl
+bs4

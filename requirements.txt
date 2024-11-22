@@ -15,7 +15,6 @@ Jinja2==3.1.4
 joblib==1.4.2
 MarkupSafe==2.1.5
 mpmath==1.3.0
-networkx==3.3
 numpy==2.0.1
 packaging==24.1
 pillow==10.4.0
@@ -28,7 +27,6 @@ regex==2024.7.24
 requests==2.32.3
 safetensors==0.4.4
 scikit-learn==1.5.1
-scipy==1.14.0
 sentence-transformers==3.0.1
 sympy==1.13.2
 threadpoolctl==3.5.0
@@ -41,3 +39,5 @@ urllib3==2.2.2
 Werkzeug==3.0.3
 redisvl
 bs4
+wheel
+sentencepiece
